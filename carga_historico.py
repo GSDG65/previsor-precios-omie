@@ -318,9 +318,10 @@ def cargar_meteo(cfg):
     log(f"   {len(puntos)} puntos · {n_desc} con histórico pendiente · pausa {pausa} s entre descargas "
         f"(≈ {n_desc * pausa // 60} min)")
 
-    primera = True
     futuro, analisis = {}, {}      # previsión (hoy en adelante) y últimos días según el modelo de previsión
-    for nombre, lat, lon, datos in pendientes:
+    estado = {"primera": True, "mm": 0}
+
+    def un_punto(nombre, lat, lon, datos):
         # --- reanálisis: desde el último día guardado (o 2021) hasta hoy-6
         ult = max(datos) if datos else None
         ini = FECHA_INICIO if not ult else dt.date.fromisoformat(ult) + dt.timedelta(days=1)
@@ -331,20 +332,19 @@ def cargar_meteo(cfg):
                 ini = min(ini, dt.date.fromisoformat(prev[0]))
         if ini <= fin_archivo:
             dias = (fin_archivo - ini).days + 1
-            if not primera and dias > 60:            # solo las descargas largas consumen cupo
+            if not estado["primera"] and dias > 60:            # solo las descargas largas consumen cupo
                 time.sleep(pausa * min(1.0, dias / 2000))
-            primera = False
+            estado["primera"] = False
             url = om_url(OM_ARCHIVO, lat, lon, f"start_date={ini}&end_date={fin_archivo}")
             try:
-                datos.update(parsear_om(json.loads(descargar(url, timeout=180))))
+                datos.update(parsear_om(json.loads(descargar(url, intentos=3, timeout=120))))
                 log(f"   {nombre}: reanálisis {ini} → {fin_archivo}")
             except Exception as e:
-                log(f"   ! {nombre}: {e}")
-                continue
-        # --- últimos días y próximos 7: API de previsión
+                log(f"   ! {nombre} (reanálisis): {e}")      # se sigue con la previsión, que es la imprescindible
+        # --- últimos días y próximos 7: API de previsión (imprescindible para emitir)
         try:
             url = om_url(OM_PREVISION, lat, lon, "past_days=10&forecast_days=7")
-            reciente = parsear_om(json.loads(descargar(url)))
+            reciente = parsear_om(json.loads(descargar(url, intentos=4, timeout=90)))
             for k, v in reciente.items():
                 if k > fin_archivo.isoformat() and k <= AYER.isoformat():
                     datos[k] = v
@@ -354,16 +354,32 @@ def cargar_meteo(cfg):
                     analisis.setdefault(nombre, {})[k] = v
         except Exception as e:
             log(f"   ! {nombre} (días recientes / previsión): {e}")
-        # --- previsión de varios modelos (solo puntos eólicos y solares)
+        # --- previsión de varios modelos (solo puntos eólicos y solares; opcional)
         if nombre in grupos_mm:
             try:
                 url = om_url(OM_PREVISION, lat, lon, "forecast_days=7&models=" + ",".join(MODELOS_METEO))
-                for m, fs in parsear_om_modelos(json.loads(descargar(url)), MODELOS_METEO).items():
+                for m, fs in parsear_om_modelos(json.loads(descargar(url, intentos=2, timeout=120)), MODELOS_METEO).items():
                     FUTURO_MODELOS.setdefault(m, {})[nombre] = {k: v for k, v in fs.items() if k >= HOY.isoformat()}
-                n_mm += 1
+                estado["mm"] += 1
             except Exception as e:
                 log(f"   ! {nombre} (varios modelos): {e}")
         escribir_punto(nombre, datos)
+
+    if n_desc == 0:
+        # día normal: los puntos se piden en paralelo (6 a la vez); las respuestas lentas no se encadenan
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=6) as ex:
+            for r in [ex.submit(un_punto, *p) for p in pendientes]:
+                try:
+                    r.result()
+                except Exception as e:
+                    log(f"   ! meteo: {e}")
+    else:
+        # hay histórico largo pendiente: de uno en uno, con pausas, para respetar el cupo de Open-Meteo
+        for p in pendientes:
+            un_punto(*p)
+    n_mm = estado["mm"]
+    log(f"   puntos con previsión: {len(futuro)} de {len(puntos)}")
     log(f"   OK · previsión de varios modelos en {n_mm} puntos ({len(FUTURO_MODELOS)} modelos)")
     return futuro, analisis
 

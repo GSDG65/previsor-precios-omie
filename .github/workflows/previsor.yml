@@ -39,7 +39,9 @@ jobs:
         run: python actualizacion_diaria.py
 
       - name: Guardar datos en el repositorio
+        if: always()
         run: |
+          cp "$(ls -t logs/actualizacion_diaria_*.log | head -1)" datos/ultimo_log.txt || true
           git config user.name "previsor-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A datos
