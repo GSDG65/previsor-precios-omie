@@ -320,6 +320,8 @@ def cargar_meteo(cfg):
 
     futuro, analisis = {}, {}      # previsión (hoy en adelante) y últimos días según el modelo de previsión
     estado = {"primera": True, "mm": 0}
+    # límite de peticiones (429): en un día normal basta esperar un par de minutos; con histórico largo, 10
+    espera = 120 if n_desc == 0 else 600
 
     def un_punto(nombre, lat, lon, datos):
         # --- reanálisis: desde el último día guardado (o 2021) hasta hoy-6
@@ -337,14 +339,14 @@ def cargar_meteo(cfg):
             estado["primera"] = False
             url = om_url(OM_ARCHIVO, lat, lon, f"start_date={ini}&end_date={fin_archivo}")
             try:
-                datos.update(parsear_om(json.loads(descargar(url, intentos=3, timeout=120))))
+                datos.update(parsear_om(json.loads(descargar(url, intentos=3, timeout=120, espera_429=espera))))
                 log(f"   {nombre}: reanálisis {ini} → {fin_archivo}")
             except Exception as e:
                 log(f"   ! {nombre} (reanálisis): {e}")      # se sigue con la previsión, que es la imprescindible
         # --- últimos días y próximos 7: API de previsión (imprescindible para emitir)
         try:
             url = om_url(OM_PREVISION, lat, lon, "past_days=10&forecast_days=7")
-            reciente = parsear_om(json.loads(descargar(url, intentos=4, timeout=90)))
+            reciente = parsear_om(json.loads(descargar(url, intentos=5, timeout=90, espera_429=espera)))
             for k, v in reciente.items():
                 if k > fin_archivo.isoformat() and k <= AYER.isoformat():
                     datos[k] = v
@@ -358,7 +360,7 @@ def cargar_meteo(cfg):
         if nombre in grupos_mm:
             try:
                 url = om_url(OM_PREVISION, lat, lon, "forecast_days=7&models=" + ",".join(MODELOS_METEO))
-                for m, fs in parsear_om_modelos(json.loads(descargar(url, intentos=2, timeout=120)), MODELOS_METEO).items():
+                for m, fs in parsear_om_modelos(json.loads(descargar(url, intentos=3, timeout=120, espera_429=espera)), MODELOS_METEO).items():
                     FUTURO_MODELOS.setdefault(m, {})[nombre] = {k: v for k, v in fs.items() if k >= HOY.isoformat()}
                 estado["mm"] += 1
             except Exception as e:
