@@ -1,0 +1,17 @@
+# Claves y ficheros locales: NUNCA al repositorio
+entsoe_token.txt
+*.token
+# Generados / locales
+__pycache__/
+*.pyc
+*.bak_*
+*.tmp
+logs/
+diagnostico_*.txt
+diagnostico_*.bat
+programar_tarea.bat
+# Caché de la evaluación de modelos meteorológicos (se regenera con evaluar_meteo.py)
+datos/meteo_modelos/
+datos/meteo_modelos_indices.csv
+# Página generada por GitHub Actions
+_site/
