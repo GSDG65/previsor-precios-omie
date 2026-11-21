@@ -1,126 +1,126 @@
-17:27:43  Actualización diaria · 2026-11-20 · carpeta: /home/runner/work/previsor-precios-omie/previsor-precios-omie
-17:27:43  == OMIE · precios del mercado diario ==
-17:27:43     ya en disco: 2150 días
-17:27:46     listado diario: 1421 ficheros
-17:27:46     días pendientes: 1
-17:27:47     OK · 2151 días (2021-01-01 → 2026-11-21)
-17:27:47     cuartohorarios: 97 días
-17:27:47  == REE · demanda horaria ==
-17:27:48     2026-11 ok
-17:27:49     OK · 2149 días
-17:27:49  == REE · generación diaria por tecnología ==
-17:27:55     2026 ok
-17:27:55     OK · 2149 días · 14 tecnologías
-17:27:55  == REE · reservas de embalses y producible hidráulico ==
-17:28:01     OK · 70 meses
-17:28:01  == MIBGAS · gas day-ahead (GDAES_D+1) ==
-17:28:01     2025: 366 sesiones
-17:28:03     2026: 365 sesiones
-17:28:03     OK · 2150 días · último 2026-11-20 = 84.27 €/MWh
-17:28:03  == ENTSO-E · Francia y Portugal ==
-17:28:07     precio Francia: 1056 días (último 2026-11-20)
-17:28:20     demanda Francia: 1053 días (último 2026-11-19)
-17:28:37     intercambio ES→FR: 1052 días (último 2026-11-19)
-17:28:55     demanda prevista D+1 (REE): 1056 días (último 2026-11-21)
-17:29:08     demanda Portugal: 1054 días (último 2026-11-19)
-17:29:11     eólica Portugal: 1054 días (último 2026-11-19)
-17:29:24     solar Portugal: 1054 días (último 2026-11-19)
-17:29:37     intercambio ES→PT: 1054 días (último 2026-11-19)
-17:30:07     nuclear indisponible: 1081 días, 426 mensajes · próximos días: 11-20 1.0 GW, 11-21 1.0 GW, 11-22 1.0 GW, 11-23 1.0 GW, 11-24 1.0 GW, 11-25 1.0 GW
-17:30:07  == Open-Meteo · meteo horaria por punto ==
-17:30:12     66 puntos · 0 con histórico pendiente · pausa 110 s entre descargas (≈ 0 min)
-17:30:12     Soria: reanálisis 2026-11-03 → 2026-11-14
-17:30:12     Galicia N (Xistral): reanálisis 2026-11-03 → 2026-11-14
-17:30:12     Asturias: reanálisis 2026-11-03 → 2026-11-14
-17:30:12     Galicia W (Coruña int.): reanálisis 2026-11-03 → 2026-11-14
-17:30:12     Burgos (Páramos): reanálisis 2026-11-03 → 2026-11-14
-17:30:12     Galicia S (Ourense/Lugo): reanálisis 2026-11-03 → 2026-11-14
-17:30:13     límite de peticiones alcanzado; espero 2 min…
-17:30:15     Zamora/León: reanálisis 2026-11-03 → 2026-11-14
-17:30:15     Palencia/Valladolid: reanálisis 2026-11-03 → 2026-11-14
-17:30:16     Zaragoza (Ebro/Moncayo): reanálisis 2026-11-03 → 2026-11-14
-17:30:17     Teruel: reanálisis 2026-11-03 → 2026-11-14
-17:30:17     Huesca: reanálisis 2026-11-03 → 2026-11-14
-17:30:18     Navarra: reanálisis 2026-11-03 → 2026-11-14
-17:30:19     La Rioja: reanálisis 2026-11-03 → 2026-11-14
-17:30:19     Cataluña (Terra Alta): reanálisis 2026-11-03 → 2026-11-14
-17:30:19     Albacete: reanálisis 2026-11-03 → 2026-11-14
-17:32:16     Guadalajara: reanálisis 2026-11-03 → 2026-11-14
-17:32:21     C. Valenciana: reanálisis 2026-11-03 → 2026-11-14
-17:32:27     Cádiz (Tarifa): reanálisis 2026-11-03 → 2026-11-14
-17:32:34     Málaga/Granada: reanálisis 2026-11-03 → 2026-11-14
-17:32:37     Almería: reanálisis 2026-11-03 → 2026-11-14
-17:32:55     Murcia: reanálisis 2026-11-03 → 2026-11-14
-17:33:04     Cantabria/País Vasco: reanálisis 2026-11-03 → 2026-11-14
-17:34:02     Badajoz: reanálisis 2026-11-03 → 2026-11-14
-17:34:32     Cuenca: reanálisis 2026-11-03 → 2026-11-14
-17:34:34     Cáceres: reanálisis 2026-11-03 → 2026-11-14
-17:34:35     Sevilla: reanálisis 2026-11-03 → 2026-11-14
-17:34:40     Huelva: reanálisis 2026-11-03 → 2026-11-14
-17:34:40     Almería/Granada: reanálisis 2026-11-03 → 2026-11-14
-17:34:41     Ciudad Real/Toledo: reanálisis 2026-11-03 → 2026-11-14
-17:35:39     Zaragoza FV: reanálisis 2026-11-03 → 2026-11-14
-17:35:43     Valladolid/Salamanca: reanálisis 2026-11-03 → 2026-11-14
-17:36:15     Murcia FV: reanálisis 2026-11-03 → 2026-11-14
-17:36:16     Alicante/Valencia FV: reanálisis 2026-11-03 → 2026-11-14
-17:36:21     Madrid FV: reanálisis 2026-11-03 → 2026-11-14
-17:36:27     Madrid: reanálisis 2026-11-03 → 2026-11-14
-17:36:28     Barcelona: reanálisis 2026-11-03 → 2026-11-14
-17:36:43     Córdoba/Jaén: reanálisis 2026-11-03 → 2026-11-14
-17:36:46     Sevilla ciudad: reanálisis 2026-11-03 → 2026-11-14
-17:36:46     Albacete/Cuenca FV: reanálisis 2026-11-03 → 2026-11-14
-17:36:47     Málaga: reanálisis 2026-11-03 → 2026-11-14
-17:36:49     Murcia ciudad: reanálisis 2026-11-03 → 2026-11-14
-17:36:49     Alicante: reanálisis 2026-11-03 → 2026-11-14
-17:36:50     Bilbao: reanálisis 2026-11-03 → 2026-11-14
-17:36:50     Zaragoza: reanálisis 2026-11-03 → 2026-11-14
-17:36:51     A Coruña: reanálisis 2026-11-03 → 2026-11-14
-17:37:21     Miño-Sil: reanálisis 2026-11-03 → 2026-11-14
-17:37:22     Duero: reanálisis 2026-11-03 → 2026-11-14
-17:37:23     Tajo: reanálisis 2026-11-03 → 2026-11-14
-17:37:24     Ebro: reanálisis 2026-11-03 → 2026-11-14
-17:37:59     Pirineo: reanálisis 2026-11-03 → 2026-11-14
-17:38:00     Guadalquivir/Guadiana: reanálisis 2026-11-03 → 2026-11-14
-17:38:01     PT Minho (Viana/Arga): reanálisis 2026-11-03 → 2026-11-14
-17:38:26     PT Trás-os-Montes: reanálisis 2026-11-03 → 2026-11-14
-17:38:27     Lleida: reanálisis 2026-11-03 → 2026-11-14
-17:38:31     PT Beira (Caramulo/Montemuro): reanálisis 2026-11-03 → 2026-11-14
-17:38:31     PT Oeste/Leiria: reanálisis 2026-11-03 → 2026-11-14
-17:38:32     Valencia: reanálisis 2026-11-03 → 2026-11-14
-17:38:55     Valladolid: reanálisis 2026-11-03 → 2026-11-14
-17:38:56     PT Alentejo FV: reanálisis 2026-11-03 → 2026-11-14
-17:39:08     PT Algarve FV: reanálisis 2026-11-03 → 2026-11-14
-17:39:12     PT Ribatejo FV: reanálisis 2026-11-03 → 2026-11-14
-17:39:12     PT Centro interior FV: reanálisis 2026-11-03 → 2026-11-14
-17:39:15     Lisboa: reanálisis 2026-11-03 → 2026-11-14
-17:39:19     Porto: reanálisis 2026-11-03 → 2026-11-14
-17:39:36     Faro: reanálisis 2026-11-03 → 2026-11-14
-17:40:38     PT Sul (Alentejo/Algarve): reanálisis 2026-11-03 → 2026-11-14
-17:42:29     puntos con previsión: 66 de 66
-17:42:29     OK · previsión de varios modelos en 46 puntos (6 modelos)
-17:42:29  == Consolidación ==
-17:42:38     índices meteo Portugal: 2149 días
-17:42:38     índices meteo: 2149 días
-17:42:38     dataset_diario.csv: 2151 días · 2149 completos (precio + meteo + gas + demanda)
-17:42:38     generado     2026-11-20T17:42:38
-17:42:38     precios      ['2021-01-01', '2026-11-21', 2151]
-17:42:38     demanda      ['2021-01-01', '2026-11-19', 2149]
-17:42:38     generacion   ['2021-01-01', '2026-11-19', 2149]
-17:42:38     gas          ['2021-01-01', '2026-11-20', 2150]
-17:42:38     hidraulica   ['2021-01', '2026-10', 70]
-17:42:38     meteo        ['2021-01-01', '2026-11-19', 2149]
-17:42:38     dias_completos 2149
-17:42:39  == Modelo ==
-17:42:39     1784 días históricos utilizables como análogos
-17:42:39     previsiones verificadas: 973 filas (196 con el real ya publicado al emitir, excluidas) · ensanche por horizonte: D+1 ×1.449, D+2 ×0.986, D+3 ×1.18, D+4 ×1.277, D+5 ×1.5
-17:42:39     corrección meteo previsión→reanálisis: eólica ×0.93, solar ×1.05 (30 días)
-17:42:39     gas 84.27 €/MWh (2026-11-20) · nuclear 6066 MW (2026-11-19) · embalses 46.8 % · pot. efectiva eól 42976 / FV 39804 MW · nivel demanda ×1.013
-17:42:39     meteo: media de varios modelos en 2 días (2026-11-24, 2026-11-25)
-17:42:39     previsión congelada: prevision_2026-11-20.json (5 días)
-17:42:39     2026-11-21 D+1: P50  128.5 €/MWh  [67–209]  medio  · real 148.4
-17:42:39     2026-11-22 D+2: P50   71.5 €/MWh  [-3–121]  barato  · riesgo precio cero
-17:42:39     2026-11-23 D+3: P50  228.0 €/MWh  [186–247]  caro
-17:42:39     2026-11-24 D+4: P50  200.8 €/MWh  [174–236]  medio
-17:42:39     2026-11-25 D+5: P50  171.4 €/MWh  [85–214]  medio
-17:42:39     previsor_datos.js actualizado (208 kB)
-17:42:39  Terminado en 14.9 min
+17:17:08  Actualización diaria · 2026-11-21 · carpeta: /home/runner/work/previsor-precios-omie/previsor-precios-omie
+17:17:08  == OMIE · precios del mercado diario ==
+17:17:08     ya en disco: 2151 días
+17:17:12     listado diario: 1422 ficheros
+17:17:12     días pendientes: 1
+17:17:12     OK · 2152 días (2021-01-01 → 2026-11-22)
+17:17:12     cuartohorarios: 98 días
+17:17:12  == REE · demanda horaria ==
+17:17:14     2026-11 ok
+17:17:15     OK · 2150 días
+17:17:15  == REE · generación diaria por tecnología ==
+17:17:20     2026 ok
+17:17:21     OK · 2150 días · 14 tecnologías
+17:17:21  == REE · reservas de embalses y producible hidráulico ==
+17:17:26     OK · 70 meses
+17:17:26  == MIBGAS · gas day-ahead (GDAES_D+1) ==
+17:17:27     2025: 366 sesiones
+17:17:29     2026: 365 sesiones
+17:17:29     OK · 2151 días · último 2026-11-21 = 87.71 €/MWh
+17:17:29  == ENTSO-E · Francia y Portugal ==
+17:17:46     precio Francia: 1057 días (último 2026-11-22)
+17:18:16     demanda Francia: 1054 días (último 2026-11-20)
+17:19:06     intercambio ES→FR: 1053 días (último 2026-11-20)
+17:19:23     demanda prevista D+1 (REE): 1057 días (último 2026-11-22)
+17:19:36     demanda Portugal: 1055 días (último 2026-11-20)
+17:19:49     eólica Portugal: 1055 días (último 2026-11-20)
+17:20:00     solar Portugal: 1055 días (último 2026-11-20)
+17:20:32     intercambio ES→PT: 1055 días (último 2026-11-20)
+17:21:11     nuclear indisponible: 1081 días, 414 mensajes · próximos días: 11-21 1.0 GW, 11-22 1.0 GW, 11-23 1.0 GW, 11-24 1.0 GW, 11-25 1.0 GW, 11-26 1.0 GW
+17:21:11  == Open-Meteo · meteo horaria por punto ==
+17:21:16     66 puntos · 0 con histórico pendiente · pausa 110 s entre descargas (≈ 0 min)
+17:21:16     límite de peticiones alcanzado; espero 2 min…
+17:21:16     Soria: reanálisis 2026-11-04 → 2026-11-15
+17:21:16     Galicia W (Coruña int.): reanálisis 2026-11-04 → 2026-11-15
+17:21:16     Galicia S (Ourense/Lugo): reanálisis 2026-11-04 → 2026-11-15
+17:21:16     Asturias: reanálisis 2026-11-04 → 2026-11-15
+17:21:16     Galicia N (Xistral): reanálisis 2026-11-04 → 2026-11-15
+17:21:20     Zamora/León: reanálisis 2026-11-04 → 2026-11-15
+17:21:20     Palencia/Valladolid: reanálisis 2026-11-04 → 2026-11-15
+17:21:21     Zaragoza (Ebro/Moncayo): reanálisis 2026-11-04 → 2026-11-15
+17:21:21     Teruel: reanálisis 2026-11-04 → 2026-11-15
+17:21:21     Huesca: reanálisis 2026-11-04 → 2026-11-15
+17:21:21     Navarra: reanálisis 2026-11-04 → 2026-11-15
+17:21:22     La Rioja: reanálisis 2026-11-04 → 2026-11-15
+17:23:17     Burgos (Páramos): reanálisis 2026-11-04 → 2026-11-15
+17:23:19     Cádiz (Tarifa): reanálisis 2026-11-04 → 2026-11-15
+17:23:20     Málaga/Granada: reanálisis 2026-11-04 → 2026-11-15
+17:23:23     Almería: reanálisis 2026-11-04 → 2026-11-15
+17:23:24     Murcia: reanálisis 2026-11-04 → 2026-11-15
+17:23:28     Cuenca: reanálisis 2026-11-04 → 2026-11-15
+17:23:28     Guadalajara: reanálisis 2026-11-04 → 2026-11-15
+17:23:28     C. Valenciana: reanálisis 2026-11-04 → 2026-11-15
+17:23:30     Badajoz: reanálisis 2026-11-04 → 2026-11-15
+17:23:31     Cáceres: reanálisis 2026-11-04 → 2026-11-15
+17:23:34     Almería/Granada: reanálisis 2026-11-04 → 2026-11-15
+17:23:35     Huelva: reanálisis 2026-11-04 → 2026-11-15
+17:25:31     Cantabria/País Vasco: reanálisis 2026-11-04 → 2026-11-15
+17:25:33     Albacete/Cuenca FV: reanálisis 2026-11-04 → 2026-11-15
+17:25:33     Cataluña (Terra Alta): reanálisis 2026-11-04 → 2026-11-15
+17:25:34     Albacete: reanálisis 2026-11-04 → 2026-11-15
+17:25:35     Sevilla: reanálisis 2026-11-04 → 2026-11-15
+17:25:35     Zaragoza FV: reanálisis 2026-11-04 → 2026-11-15
+17:25:36     Córdoba/Jaén: reanálisis 2026-11-04 → 2026-11-15
+17:25:37     Alicante/Valencia FV: reanálisis 2026-11-04 → 2026-11-15
+17:25:39     Murcia FV: reanálisis 2026-11-04 → 2026-11-15
+17:25:39     Valladolid/Salamanca: reanálisis 2026-11-04 → 2026-11-15
+17:25:39     Lleida: reanálisis 2026-11-04 → 2026-11-15
+17:25:40     Ciudad Real/Toledo: reanálisis 2026-11-04 → 2026-11-15
+17:25:41     Barcelona: reanálisis 2026-11-04 → 2026-11-15
+17:25:42     Sevilla ciudad: reanálisis 2026-11-04 → 2026-11-15
+17:25:42     Málaga: reanálisis 2026-11-04 → 2026-11-15
+17:25:43     Bilbao: reanálisis 2026-11-04 → 2026-11-15
+17:25:45     Madrid: reanálisis 2026-11-04 → 2026-11-15
+17:25:46     A Coruña: reanálisis 2026-11-04 → 2026-11-15
+17:27:42     Madrid FV: reanálisis 2026-11-04 → 2026-11-15
+17:27:45     Valencia: reanálisis 2026-11-04 → 2026-11-15
+17:27:45     Miño-Sil: reanálisis 2026-11-04 → 2026-11-15
+17:27:46     Alicante: reanálisis 2026-11-04 → 2026-11-15
+17:27:46     Duero: reanálisis 2026-11-04 → 2026-11-15
+17:27:46     Tajo: reanálisis 2026-11-04 → 2026-11-15
+17:27:46     Murcia ciudad: reanálisis 2026-11-04 → 2026-11-15
+17:27:47     Ebro: reanálisis 2026-11-04 → 2026-11-15
+17:27:47     Pirineo: reanálisis 2026-11-04 → 2026-11-15
+17:27:47     Guadalquivir/Guadiana: reanálisis 2026-11-04 → 2026-11-15
+17:27:47     PT Minho (Viana/Arga): reanálisis 2026-11-04 → 2026-11-15
+17:27:48     Zaragoza: reanálisis 2026-11-04 → 2026-11-15
+17:27:48     PT Trás-os-Montes: reanálisis 2026-11-04 → 2026-11-15
+17:27:48     PT Beira (Caramulo/Montemuro): reanálisis 2026-11-04 → 2026-11-15
+17:27:49     PT Oeste/Leiria: reanálisis 2026-11-04 → 2026-11-15
+17:27:49     PT Sul (Alentejo/Algarve): reanálisis 2026-11-04 → 2026-11-15
+17:27:49     PT Alentejo FV: reanálisis 2026-11-04 → 2026-11-15
+17:27:50     PT Algarve FV: reanálisis 2026-11-04 → 2026-11-15
+17:27:50     PT Ribatejo FV: reanálisis 2026-11-04 → 2026-11-15
+17:27:51     PT Centro interior FV: reanálisis 2026-11-04 → 2026-11-15
+17:27:51     Lisboa: reanálisis 2026-11-04 → 2026-11-15
+17:27:51     Porto: reanálisis 2026-11-04 → 2026-11-15
+17:27:51     Faro: reanálisis 2026-11-04 → 2026-11-15
+17:29:57     Valladolid: reanálisis 2026-11-04 → 2026-11-15
+17:29:57     puntos con previsión: 66 de 66
+17:29:57     OK · previsión de varios modelos en 46 puntos (6 modelos)
+17:29:57  == Consolidación ==
+17:30:06     índices meteo Portugal: 2150 días
+17:30:06     índices meteo: 2150 días
+17:30:06     dataset_diario.csv: 2152 días · 2150 completos (precio + meteo + gas + demanda)
+17:30:06     generado     2026-11-21T17:30:06
+17:30:06     precios      ['2021-01-01', '2026-11-22', 2152]
+17:30:06     demanda      ['2021-01-01', '2026-11-20', 2150]
+17:30:06     generacion   ['2021-01-01', '2026-11-20', 2150]
+17:30:06     gas          ['2021-01-01', '2026-11-21', 2151]
+17:30:06     hidraulica   ['2021-01', '2026-10', 70]
+17:30:06     meteo        ['2021-01-01', '2026-11-20', 2150]
+17:30:06     dias_completos 2150
+17:30:06  == Modelo ==
+17:30:07     1785 días históricos utilizables como análogos
+17:30:07     previsiones verificadas: 1008 filas (203 con el real ya publicado al emitir, excluidas) · ensanche por horizonte: D+1 ×0.995, D+2 ×0.986, D+3 ×1.133, D+4 ×1.277, D+5 ×1.5
+17:30:07     corrección meteo previsión→reanálisis: eólica ×0.94, solar ×1.05 (30 días)
+17:30:07     gas 87.71 €/MWh (2026-11-21) · nuclear 6067 MW (2026-11-20) · embalses 46.8 % · pot. efectiva eól 42494 / FV 39962 MW · nivel demanda ×1.012
+17:30:07     meteo: media de varios modelos en 2 días (2026-11-25, 2026-11-26)
+17:30:07     previsión congelada: prevision_2026-11-21.json (5 días)
+17:30:07     2026-11-22 D+1: P50   55.1 €/MWh  [-34–106]  barato  · riesgo precio cero  · real 65.1
+17:30:07     2026-11-23 D+2: P50  223.5 €/MWh  [194–238]  caro
+17:30:07     2026-11-24 D+3: P50  198.8 €/MWh  [163–239]  medio
+17:30:07     2026-11-25 D+4: P50  112.3 €/MWh  [80–175]  medio  · riesgo precio cero
+17:30:07     2026-11-26 D+5: P50  214.9 €/MWh  [174–242]  caro
+17:30:07     previsor_datos.js actualizado (212 kB)
+17:30:07  Terminado en 13.0 min
