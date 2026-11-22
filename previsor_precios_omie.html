@@ -10,7 +10,7 @@
   --brand:#3AAA35; --blue:#0088c4; --band:#009FE3; --real:#d97d00;
   --h1:#08598a; --h2:#0b74b0; --h3:#2f95cf; --h4:#6fb6e0; --h5:#a8d3ee;
   --ok:#2e8b2a; --warn:#b37400; --bad:#c23b2b; --okbg:#e7f4e6; --warnbg:#fbf1dc; --badbg:#fbe6e3;
-  --pos:#c23b2b; --neg:#2e8b2a;
+  --pos:#c23b2b; --neg:#2e8b2a; --nuc:#8e44ad;
 }
 @media (prefers-color-scheme: dark){
   :root{
@@ -18,7 +18,7 @@
     --blue:#43b4ea; --band:#2aa7e6; --real:#f2a43a;
     --h1:#9fd6f5; --h2:#6cc0ee; --h3:#3fa6dd; --h4:#2a83b5; --h5:#1f6189;
     --ok:#6cc768; --warn:#e3b04b; --bad:#ef7b6c; --okbg:#1f3320; --warnbg:#382e17; --badbg:#3b221e;
-    --pos:#ef7b6c; --neg:#6cc768;
+    --pos:#ef7b6c; --neg:#6cc768; --nuc:#c39bd3;
   }
 }
 *{box-sizing:border-box}
@@ -72,6 +72,7 @@ td.num{font-variant-numeric:tabular-nums}
 select{font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
 .err{color:var(--bad)} .bien{color:var(--ok)}
 .pill{font-size:11px;color:var(--muted)}
+.leyenda .pill::before{display:none}
 .vista{display:none} .vista.on{display:block}
 @media (max-width:900px){.dias{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2{grid-template-columns:1fr}}
 </style>
@@ -348,10 +349,10 @@ function detalle(){
 
   // entradas
   const h = [...Array(24).keys()];
-  const e = d.entradas, cols = [["Demanda",e.demanda_mw,css("--ink2")],["Eólica",e.eolica_mw,css("--brand")],["Solar FV",e.solar_mw,css("--real")],["Residual térmica",e.residual_mw,css("--blue")]];
+  const e = d.entradas, cols = [["Demanda",e.demanda_mw,css("--ink2")],["Eólica",e.eolica_mw,css("--brand")],["Solar FV",e.solar_mw,css("--real")],["Residual térmica",e.residual_mw,css("--blue")],["Nuclear",Array(24).fill(e.nuclear_mw),css("--nuc"),true]];
   grafico($("#chEntradas"), {n:24, etiquetas:h.map(String), titulos:h.map(k=>k+":00"), unidad:"MW", alto:240, ymin0:true,
-    series: cols.map(([n,v,c])=>({nombre:n,color:c,valores:v}))});
-  $("#legEntradas").innerHTML = cols.map(([n,,c])=>`<span style="--c:${c}">${n}</span>`).join("") + `<span class="pill">Nuclear constante: ${fmt(e.nuclear_mw)} MW</span>`;
+    series: cols.map(([n,v,c,dis])=>({nombre:n,color:c,valores:v,discontinua:!!dis}))});
+  $("#legEntradas").innerHTML = cols.map(([n,,c])=>`<span style="--c:${c}">${n}</span>`).join("") + `<span class="pill nota-nuc">Nuclear constante en el día: ${fmt(e.nuclear_mw)} MW</span>`;
 }
 
 /* ------------------------------------------------------------------ verificación */
