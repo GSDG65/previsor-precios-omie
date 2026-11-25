@@ -83,8 +83,7 @@ class Base:
         g = gas if gas is not None else self.gas.get(fecha)
         if g is None:
             return None
-        co2 = self.cfg["co2_anual_eur_t"]
-        c = co2.get(fecha[:4], list(co2.values())[-1])
+        c = co2_eur_t(self.cfg, fecha)
         return g / self.cfg["ccgt_rendimiento"] + c * self.cfg["ccgt_factor_emision_t_mwh"]
 
     def nuclear_mw(self, fecha):

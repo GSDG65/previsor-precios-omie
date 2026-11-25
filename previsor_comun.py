@@ -69,7 +69,12 @@ CONFIG_DEFECTO = {
     "curva_eolica": {"arranque": 3.0, "nominal": 12.0, "corte": 25.0},
     # CO2 (EUA, €/t) medio aproximado por año, para normalizar el coste del ciclo combinado.
     # Valores orientativos: corrígelos si tienes mejores datos. El año en curso se usa también como valor actual.
-    "co2_anual_eur_t": {"2021": 53, "2022": 81, "2023": 84, "2024": 65, "2025": 73, "2026": 75},
+    "co2_anual_eur_t": {"2021": 53, "2022": 81, "2023": 84, "2024": 65, "2025": 73, "2026": 79.38},
+    # CO2 (EUA, €/t) medio mensual (Sendeco2). Tiene prioridad sobre el anual. Para los meses posteriores al
+    # último que figure se usa ese último valor. Añade cada mes su media para que el coste no se quede atrás.
+    "co2_mensual_eur_t": {"2026-01": 86.08, "2026-02": 73.79, "2026-03": 68.73, "2026-04": 72.68,
+                          "2026-05": 74.95, "2026-06": 77.93, "2026-07": 80.42, "2026-08": 81.59,
+                          "2026-09": 85.04, "2026-10": 86.17, "2026-11": 86.38},
     # Coste marginal CCGT = gas / rendimiento + CO2 * factor_emision
     "ccgt_rendimiento": 0.53,
     "ccgt_factor_emision_t_mwh": 0.36,
@@ -81,6 +86,18 @@ CONFIG_DEFECTO = {
     "openmeteo_pausa_s": 110
 }
 
+
+def co2_eur_t(cfg, fecha):
+    """Precio del CO2 (€/t) para una fecha AAAA-MM-DD: media mensual si se conoce; si la fecha es posterior al
+    último mes conocido, ese último mes; si no, la media anual (o la del último año disponible)."""
+    men = cfg.get("co2_mensual_eur_t") or {}
+    mes = fecha[:7]
+    if mes in men:
+        return float(men[mes])
+    if men and mes > max(men):
+        return float(men[max(men)])
+    anual = cfg["co2_anual_eur_t"]
+    return float(anual.get(fecha[:4], list(anual.values())[-1]))
 
 def cargar_config():
     if not os.path.exists(CONFIG_PATH):

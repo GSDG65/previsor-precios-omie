@@ -448,7 +448,7 @@ def consolidar(cfg):
         p = precios.get(f)
         g = gen.get(f, {})
         gs = float(gas[f]["gas_eur_mwh"]) if f in gas else None
-        c = co2.get(str(d.year), list(co2.values())[-1])
+        c = co2_eur_t(cfg, f)
         h = hid_mes(f[:7])
         fila = {"fecha": f, "tipo_dia": tipo_dia(d), "excluido": int(exc_ini <= f <= exc_fin),
                 "gas_eur_mwh": gs, "co2_eur_t": c,
