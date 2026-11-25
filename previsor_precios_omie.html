@@ -101,8 +101,8 @@ select{font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:6
       <div class="dias" id="dias"></div>
     </div>
     <div class="panel">
-      <h2>Entorno horario: última semana real y 5 días previstos</h2>
-      <p class="nota">Línea naranja: precio real OMIE. Línea azul y banda: previsión P50 y horquilla P10–P90.</p>
+      <h2>Entorno horario: últimos días reales y 5 días previstos</h2>
+      <p class="nota">Línea naranja: precio real OMIE. Línea azul y banda: previsión P50 y horquilla P10–P90. Se muestran 7, 5 o 3 días reales según el ancho de la pantalla.</p>
       <div class="chart" id="chSemana"></div>
       <div class="leyenda"><span style="--c:var(--real)">Real (cuartos de 15 min)</span><span style="--c:var(--blue)">Previsión P50 (horaria)</span><span class="area" style="--c:var(--band)">Horquilla P10–P90</span></div>
     </div>
@@ -191,7 +191,7 @@ let diaSel = 0;
 /* ------------------------------------------------------------------ gráfico genérico (SVG) */
 function grafico(cont, cfg){
   // cfg: {n, etiquetas[], series:[{nombre,color,valores[],ancho,discontinua}], banda:{inf[],sup[],color}, unidad, marcas:[{i,texto}], ymin0}
-  const W = cont.clientWidth || 800, H = cfg.alto || 280, m = {l:48,r:12,t:12,b:28};
+  const W = cont.clientWidth || 800, H = cfg.alto || 280, m = {l:48,r:12,t:12,b:(cfg.marcas||[]).some(mk=>mk.textos)?36:28};
   const iw = W-m.l-m.r, ih = H-m.t-m.b, n = cfg.n;
   let vals = [];
   cfg.series.forEach(s=>s.valores.forEach(v=>v!=null&&vals.push(v)));
@@ -206,9 +206,15 @@ function grafico(cont, cfg){
     s += `<text x="${m.l-6}" y="${y(v)+4}" text-anchor="end">${fmt(v)}</text>`;
   }
   if(lo<0 && hi>0) s += `<line x1="${m.l}" x2="${W-m.r}" y1="${y(0)}" y2="${y(0)}" stroke="${css('--muted')}" stroke-width="1"/>`;
-  (cfg.marcas||[]).forEach(mk=>{
+  (cfg.marcas||[]).forEach((mk,k,lista)=>{
     s += `<line x1="${x(mk.i)}" x2="${x(mk.i)}" y1="${m.t}" y2="${m.t+ih}" stroke="${css('--line')}" stroke-width="1" ${mk.fuerte?'':'stroke-dasharray="3 3"'}/>`;
-    if(mk.texto) s += `<text x="${x(mk.i)+4}" y="${m.t+11}">${mk.texto}</text>`;
+    if(mk.textos){
+      // etiqueta de día bajo el eje, centrada en su tramo: la variante más larga que quepa (≈6,3 px por carácter)
+      const fin = k+1<lista.length ? lista[k+1].i : n-1, xc = (x(mk.i)+x(fin))/2, hueco = x(fin)-x(mk.i)-4;
+      const t = mk.textos.find(v=>v.length*6.3<=hueco) || "";
+      if(t) s += `<text x="${xc}" y="${H-m.b+15}" text-anchor="middle">${t}</text>`;
+      if(mk.sub && mk.sub.length*5.8<=hueco) s += `<text x="${xc}" y="${H-m.b+29}" text-anchor="middle" style="fill:${css('--blue')};font-size:10px;font-weight:600">${mk.sub}</text>`;
+    } else if(mk.texto) s += `<text x="${x(mk.i)+4}" y="${m.t+11}">${mk.texto}</text>`;
   });
   const cada = Math.max(1, Math.ceil(n/(iw/46)));
   cfg.etiquetas.forEach((e,i)=>{ if(e!=="" && i%cada===0) s += `<text x="${x(i)}" y="${H-8}" text-anchor="middle">${e}</text>`; });
@@ -294,11 +300,14 @@ function semana(){
   document.querySelectorAll(".dia").forEach(el=>el.onclick=()=>{ diaSel=+el.dataset.i; semana(); detalle(); ir("detalle"); });
 
   // entorno horario: 7 días reales + previsión
-  const reales = D.historico.filter(h=>h.fecha < P.dias[0].fecha).slice(-7);
+  // en pantallas estrechas se muestran menos días reales para que la previsión no quede comprimida
+  const anchoG = $("#chSemana").clientWidth || 800, nReales = anchoG < 560 ? 3 : anchoG < 900 ? 5 : 7;
+  const reales = D.historico.filter(h=>h.fecha < P.dias[0].fecha).slice(-nReales);
   const et=[], ti=[], real=[], p50=[], inf=[], sup=[], marcas=[];
-  reales.forEach(h=>{ marcas.push({i:et.length, texto:fdia(h.fecha)}); real96(h.real_cuartos, h.real_horas).forEach((v,k)=>{ et.push(""); ti.push(fdia(h.fecha)+" "+hhmm(k)); real.push(v); p50.push(null); inf.push(null); sup.push(null); }); });
+  const textosDia = f => { const d=new Date(f+"T12:00:00"); return [fdia(f), DIAS_SEM[d.getDay()]+" "+d.getDate(), String(d.getDate())]; };
+  reales.forEach(h=>{ marcas.push({i:et.length, textos:textosDia(h.fecha)}); real96(h.real_cuartos, h.real_horas).forEach((v,k)=>{ et.push(""); ti.push(fdia(h.fecha)+" "+hhmm(k)); real.push(v); p50.push(null); inf.push(null); sup.push(null); }); });
   const corte = et.length;
-  P.dias.forEach(d=>{ marcas.push({i:et.length, texto:fdia(d.fecha)+" D+"+d.horizonte}); const r = d.real_horas? real96(d.real_cuartos, d.real_horas) : null;
+  P.dias.forEach(d=>{ marcas.push({i:et.length, textos:textosDia(d.fecha), sub:"D+"+d.horizonte}); const r = d.real_horas? real96(d.real_cuartos, d.real_horas) : null;
     a96(d.horas.p50).forEach((v,k)=>{ et.push(""); ti.push(fdia(d.fecha)+" "+hhmm(k)); real.push(r? r[k]:null); p50.push(v); inf.push(d.horas.p10[k>>2]); sup.push(d.horas.p90[k>>2]); }); });
   marcas.forEach(mk=>mk.fuerte = mk.i===corte);
   grafico($("#chSemana"), {n:et.length, etiquetas:et, titulos:ti, unidad:"€/MWh", alto:300, marcas,
