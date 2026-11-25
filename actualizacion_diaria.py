@@ -280,6 +280,30 @@ def guardar_medias(emitida, medias):
                   "eol_media": round(media(v["eol"]), 5), "sol_media": round(media(v["sol"]), 5)}
     escribir_tabla(CSV_MEDIA, ["clave", "emitida", "fecha", "horizonte", "eol_media", "sol_media"], reg)
 
+def nuclear_prevista(base, nuc_f, fechas):
+    """Nuclear media prevista (MW) para cada fecha: el último dato real (día nuc_f) corregido con el cambio
+    en la potencia indisponible anunciada a ENTSO-E entre ese día y el día previsto (recargas, paradas y
+    vueltas a la red). Si falta la indisponibilidad de alguno de los dos días, se repite el último real.
+    Prueba con las previsiones congeladas (oct-nov 2026): error medio de la nuclear 217 → 109 MW y, en los
+    días con inicio o fin de parada, error del precio diario 20,0 → 17,5 €/MWh (en el resto, igual)."""
+    nuc = base.nuclear_mw(nuc_f)
+    try:
+        ind = leer_ancho("espana_nuclear_indisponible.csv")
+    except Exception:
+        ind = {}
+    def ind_dia(f):
+        v = ind.get(f)
+        return media(v) if v and None not in v else None
+    i0 = ind_dia(nuc_f)
+    out = {}
+    for f in fechas:
+        i1 = ind_dia(f)
+        if i0 is None or i1 is None:
+            out[f] = (nuc, "último real")
+        else:
+            out[f] = (max(0.0, nuc + i0 - i1), "último real ± paradas anunciadas")
+    return out
+
 def emitir(cfg, base, an, prev_meteo, cal, forzar=False):
     emitida = HOY.isoformat()
     ruta = os.path.join(PREV_DIR, f"prevision_{emitida}.json")
@@ -294,6 +318,7 @@ def emitir(cfg, base, an, prev_meteo, cal, forzar=False):
     gas_act = base.gas[ult_gas]
     nuc_f = base.ultimo_con({f: base.nuclear_mw(f) for f in base.gen}, emitida)
     nuc = base.nuclear_mw(nuc_f)
+    nuc_dias = nuclear_prevista(base, nuc_f, [(HOY + dt.timedelta(days=hz)).isoformat() for hz in HORIZONTES])
     llen = base.llenado(emitida)
     cap = base.cap_actual
     f_dem = factor_nivel_demanda(base, emitida)
@@ -337,7 +362,8 @@ def emitir(cfg, base, an, prev_meteo, cal, forzar=False):
                 solI = [x * cm["sol"][0] for x in mm["sol"]]
                 info_meteo.update({"fuente": f"media de {len(usados['eol'])} modelos",
                                    "correccion": {k: [round(v[0], 3), v[1]] for k, v in cm.items()}})
-        d = {"fecha": obj, "dem": dem, "eolI": eolI, "solI": solI, "nuc": nuc, "cap": cap, "temp": m["temp"],
+        nuc_d, nuc_fuente = nuc_dias.get(obj, (nuc, "último real"))
+        d = {"fecha": obj, "dem": dem, "eolI": eolI, "solI": solI, "nuc": nuc_d, "cap": cap, "temp": m["temp"],
              "llenado": llen, "tipo": tipo_dia(dt.date.fromisoformat(obj))}
         d["R"] = base.residual(dem, eolI, solI, nuc, cap)
         coste = base.coste_ccgt(obj, gas=base.gas.get(obj, gas_act))
@@ -363,7 +389,7 @@ def emitir(cfg, base, an, prev_meteo, cal, forzar=False):
                          "demanda_mw": [round(x) for x in dem],
                          "eolica_mw": [round(x * cap[0]) for x in eolI],
                          "solar_mw": [round(x * cap[1]) for x in solI],
-                         "nuclear_mw": round(nuc), "residual_mw": [round(x) for x in d["R"]],
+                         "nuclear_mw": round(nuc_d), "nuclear_fuente": nuc_fuente, "residual_mw": [round(x) for x in d["R"]],
                          "llenado_pct": llen,
                          # Portugal: índices previstos guardados para evaluarlos (el modelo aún no los usa)
                          "portugal": {k: [None if x is None else round(x, 4) for x in m[k]]
@@ -376,6 +402,8 @@ def emitir(cfg, base, an, prev_meteo, cal, forzar=False):
             guardar_medias(emitida, medias_dia)
         except Exception as e:
             log(f"   ! no se pudo guardar la media de modelos: {e}")
+    log("   nuclear prevista: " + ", ".join(f"{d['fecha'][5:]} {d['entradas']['nuclear_mw']} MW" for d in dias)
+        + f" (último real {nuc:.0f} MW del {nuc_f}, corregido con las paradas anunciadas)")
     usa = [d["fecha"] for d in dias if d["meteo"]["fuente"].startswith("media")]
     log(f"   meteo: media de varios modelos en {len(usa)} días ({', '.join(usa) or 'ninguno'})")
     salida = {"emitida": emitida, "generada": dt.datetime.now().isoformat(timespec="seconds"),

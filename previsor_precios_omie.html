@@ -361,7 +361,7 @@ function detalle(){
   const e = d.entradas, cols = [["Demanda",e.demanda_mw,css("--ink2")],["Eólica",e.eolica_mw,css("--brand")],["Solar FV",e.solar_mw,css("--real")],["Residual térmica",e.residual_mw,css("--blue")],["Nuclear",Array(24).fill(e.nuclear_mw),css("--nuc"),true]];
   grafico($("#chEntradas"), {n:24, etiquetas:h.map(String), titulos:h.map(k=>k+":00"), unidad:"MW", alto:240, ymin0:true,
     series: cols.map(([n,v,c,dis])=>({nombre:n,color:c,valores:v,discontinua:!!dis}))});
-  $("#legEntradas").innerHTML = cols.map(([n,,c])=>`<span style="--c:${c}">${n}</span>`).join("") + `<span class="pill nota-nuc">Nuclear constante en el día: ${fmt(e.nuclear_mw)} MW</span>`;
+  $("#legEntradas").innerHTML = cols.map(([n,,c])=>`<span style="--c:${c}">${n}</span>`).join("") + `<span class="pill nota-nuc">Nuclear prevista para el día: ${fmt(e.nuclear_mw)} MW${e.nuclear_fuente&&e.nuclear_fuente!=="último real"?" (último real ajustado con las paradas anunciadas)":""}</span>`;
 }
 
 /* ------------------------------------------------------------------ verificación */
