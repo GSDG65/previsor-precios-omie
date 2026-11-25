@@ -8,6 +8,8 @@ con horquilla P10–P90. Se ejecuta cada día en GitHub Actions y publica el vis
 - **Datos**: OMIE (precios, también cuartohorarios), REE (demanda, generación, embalses), MIBGAS (gas),
   Open-Meteo (varios modelos meteorológicos y reanálisis), ENTSO-E (Francia, Portugal, paradas nucleares).
 - **Calibración**: el sesgo y la anchura de la horquilla se recalibran solos con las previsiones congeladas.
+  El sesgo de cada franja se calcula aparte para días de poco y mucho viento previsto (corte en la mediana);
+  se desactiva con `"sesgo_por_viento": false` en `config_previsor.json`.
 
 Ficheros principales: `actualizacion_diaria.py` (ejecución diaria), `previsor_modelo.py` (modelo),
 `previsor_comun.py` (descargas y utilidades), `carga_historico.py` (histórico), `evaluar_meteo.py`

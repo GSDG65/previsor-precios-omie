@@ -39,6 +39,14 @@ CAMBIO_HORQUILLA_DIA = "2026-10-26"
 # 0.93 → 0.85 el 2-nov-2026 para recoger antes los cambios de régimen (parada nuclear, salto del gas).
 SESGO_DECAIMIENTO = 0.85
 SESGO_VENTANA = 30
+# Sesgo por tramo de viento (23-nov-2026): el error del modelo depende del viento previsto (con mucho
+# viento sobrestima el precio bastante más que con poco), y un único sesgo por franja no corrige los dos casos.
+# Las previsiones verificadas de cada franja se parten por la mediana de la eólica prevista del día y el
+# sesgo se calcula solo con las del mismo tramo (todos los horizontes juntos). Si un tramo tiene menos de
+# 10 casos se usa el sesgo de siempre. Prueba con las previsiones congeladas (24-oct a 22-nov): error del
+# precio diario −1 %, de las franjas −5 % y horquilla algo más fiable; mejor en D+5, algo peor en D+2–D+4.
+# Se desactiva con "sesgo_por_viento": false en config_previsor.json.
+SESGO_POR_VIENTO = True
 
 # ============================================================================
 # Meteo prevista → índices horarios
@@ -91,12 +99,29 @@ def publicados_al_emitir():
                 pub.add((p["emitida"], d["fecha"]))
     return pub
 
-def calibrar(base):
+def eolica_prevista_por_dia():
+    """{(emitida, objetivo): eólica media prevista en MW} leída de las previsiones congeladas."""
+    eol = {}
+    for a in glob.glob(os.path.join(PREV_DIR, "prevision_*.json")):
+        try:
+            with open(a, encoding="utf-8") as f:
+                p = json.load(f)
+        except Exception:
+            continue
+        for d in p.get("dias", []):
+            v = (d.get("entradas") or {}).get("eolica_mw")
+            if v and None not in v:
+                eol[(p["emitida"], d["fecha"])] = media(v)
+    return eol
+
+def calibrar(base, cfg=None):
     """Devuelve {horizonte: {"sesgo": {franja: ratio}, "ensanche": f, "n": n}} y la tabla de verificación."""
     _, reg = leer_tabla(REGISTRO)
     pub = publicados_al_emitir()
+    eol_prev = eolica_prevista_por_dia()
     verif = {}
     por_h = {}
+    por_franja_eol = {}          # franja → [(emitida, eólica prevista MW, (real − p50 bruto)/coste)]
     for k, r in reg.items():
         obj = r["objetivo"]
         p = base.precio.get(obj)
@@ -116,17 +141,36 @@ def calibrar(base):
             continue          # el real ya se conocía al emitir: no enseña nada al calibrador
         por_h.setdefault(int(r["horizonte"]), []).append((r["emitida"], fr, real, coste,
                                                           float(r["p50_bruto"]), float(r["semi_bruta"])))
+        e = eol_prev.get((r["emitida"], obj))
+        if fr != "dia" and e is not None:
+            por_franja_eol.setdefault(fr, []).append((r["emitida"], obj, e, (real - float(r["p50_bruto"])) / coste))
     # Mientras un horizonte no tenga casos suficientes, se usan los de todos los horizontes juntos
     # (cada franja tiene un comportamiento parecido a 2, 3, 4 o 5 días vista).
     todas = sorted(f for h in HORIZONTES for f in por_h.get(h, []))
 
-    def sesgo_de(filas_sel, n):
-        xs = [(real - p50b) / coste for _, fr, real, coste, p50b, _ in filas_sel if fr == n][-SESGO_VENTANA:]
+    def media_decaida(xs):
+        xs = xs[-SESGO_VENTANA:]
         if len(xs) < 10:
             return None
         pesos = [SESGO_DECAIMIENTO ** (len(xs) - 1 - i) for i in range(len(xs))]
         s = sum(x * w for x, w in zip(xs, pesos)) / sum(pesos)
         return round(max(-0.4, min(0.4, s)), 4)
+
+    def sesgo_de(filas_sel, n):
+        return media_decaida([(real - p50b) / coste for _, fr, real, coste, p50b, _ in filas_sel if fr == n])
+
+    # sesgo por tramo de viento: {franja: {"umbral_mw": mediana, "bajo": s | None, "alto": s | None}}
+    por_viento = {}
+    if (cfg or {}).get("sesgo_por_viento", SESGO_POR_VIENTO):
+        for n, _, _ in FRANJAS:
+            filas_n = sorted(por_franja_eol.get(n, []))
+            if len(filas_n) < 20:
+                continue
+            eols = sorted(e for _, _, e, _ in filas_n)
+            umbral = eols[len(eols) // 2]
+            por_viento[n] = {"umbral_mw": round(umbral),
+                             "bajo": media_decaida([x for _, _, e, x in filas_n if e < umbral]),
+                             "alto": media_decaida([x for _, _, e, x in filas_n if e >= umbral])}
 
     # ensanche: el que habría hecho falta para que el 80 % de los reales cayera dentro
     def ens_de(filas_sel, minimo):
@@ -158,8 +202,24 @@ def calibrar(base):
         dia_ok = lambda fs: [f for f in fs if f[1] == "dia" and f[0] >= CAMBIO_HORQUILLA_DIA]
         ens_f["dia"] = primero(ens_de(dia_ok(filas), 10), ens_de(dia_ok(todas), 10), 1.0)
         cal[h] = {"sesgo": sesgo, "origen_sesgo": origen, "ensanche": ens_global,
-                  "ensanche_franja": ens_f, "n": len(filas)}
+                  "ensanche_franja": ens_f, "n": len(filas), "sesgo_viento": por_viento}
     return cal, verif
+
+def _fmt(s):
+    return "–" if s is None else f"{s:+.3f}"
+
+def sesgo_para_dia(c_h, eol_mw):
+    """Sesgo por franja que se aplica a un día: el de su tramo de viento si existe; si no, el de siempre.
+    Devuelve (sesgo, {franja: "bajo" | "alto" | "general"})."""
+    sesgo, tramo = dict(c_h.get("sesgo", {})), {}
+    for n, pv in (c_h.get("sesgo_viento") or {}).items():
+        t = "alto" if eol_mw >= pv["umbral_mw"] else "bajo"
+        if pv.get(t) is not None:
+            sesgo[n] = pv[t]
+            tramo[n] = t
+    for n, _, _ in FRANJAS:
+        tramo.setdefault(n, "general")
+    return sesgo, tramo
 
 # ============================================================================
 # Emisión
@@ -285,7 +345,8 @@ def emitir(cfg, base, an, prev_meteo, cal, forzar=False):
         decaimiento = max(0.4, 1.0 - 0.12 * (hz - 1))          # el sesgo reciente pesa menos a más horizonte
         ajuste_bruto = {n: s_rec[n] * decaimiento for n, _, _ in FRANJAS}
         bruto = prever_dia(an, d, emitida, coste, ajuste=ajuste_bruto)
-        ajuste = {n: ajuste_bruto[n] + c_h["sesgo"].get(n, 0.0) for n, _, _ in FRANJAS}
+        sesgo_dia, tramo_viento = sesgo_para_dia(c_h, media(eolI) * cap[0])
+        ajuste = {n: ajuste_bruto[n] + sesgo_dia.get(n, 0.0) for n, _, _ in FRANJAS}
         pr = prever_dia(an, d, emitida, coste, ajuste=ajuste,
                         ensanche=c_h.get("ensanche_franja") or c_h["ensanche"])
         real_h = base.precio.get(obj) if hz == 1 else None
@@ -307,7 +368,7 @@ def emitir(cfg, base, an, prev_meteo, cal, forzar=False):
                          # Portugal: índices previstos guardados para evaluarlos (el modelo aún no los usa)
                          "portugal": {k: [None if x is None else round(x, 4) for x in m[k]]
                                       for k in ("eol_pt", "sol_pt", "temp_pt") if m.get(k)}},
-            "sesgo_cal": c_h["sesgo"], "ensanche": c_h["ensanche"],
+            "sesgo_cal": sesgo_dia, "tramo_viento": tramo_viento, "ensanche": c_h["ensanche"],
             "ensanche_franja": c_h.get("ensanche_franja", {}),
         })
     if medias_dia:
@@ -461,9 +522,16 @@ def main():
     if not prev_meteo:
         # sin descarga: reutiliza la meteo de la última previsión guardada si es de hoy
         log("   ! sin meteo prevista nueva: no se puede emitir previsión hoy")
-    cal, verif = calibrar(base)
+    cal, verif = calibrar(base, cfg)
     log(f"   previsiones verificadas: {len(verif)} filas ({sum(v['publicado'] for v in verif.values())} con el real ya publicado al emitir, excluidas) · ensanche por horizonte: "
         + ", ".join(f"D+{h} ×{c['ensanche']}" for h, c in cal.items()))
+    pv = next(iter(cal.values()), {}).get("sesgo_viento") or {}
+    if pv:
+        log("   sesgo por tramo de viento (poco / mucho): "
+            + ", ".join(f"{n} {_fmt(v['bajo'])}/{_fmt(v['alto'])}" for n, v in pv.items())
+            + f" · umbral ≈ {media([v['umbral_mw'] for v in pv.values()]):.0f} MW")
+    else:
+        log("   sesgo por tramo de viento: sin casos suficientes o desactivado; se usa el sesgo general")
     escribir_tabla("verificacion.csv", CAB_REG + ["real", "error", "dentro", "publicado"], verif)
 
     prevision = None

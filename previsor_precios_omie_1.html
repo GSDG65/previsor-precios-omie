@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Previsor de precios OMIE</title>
+<style>
+:root{
+  --bg:#f5f6f4; --surface:#ffffff; --ink:#1d2421; --ink2:#4c5652; --muted:#7c8682; --line:#e2e6e3; --grid:#eef1ef;
+  --brand:#3AAA35; --blue:#0088c4; --band:#009FE3; --real:#d97d00;
+  --h1:#08598a; --h2:#0b74b0; --h3:#2f95cf; --h4:#6fb6e0; --h5:#a8d3ee;
+  --ok:#2e8b2a; --warn:#b37400; --bad:#c23b2b; --okbg:#e7f4e6; --warnbg:#fbf1dc; --badbg:#fbe6e3;
+  --pos:#c23b2b; --neg:#2e8b2a; --nuc:#8e44ad;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#121614; --surface:#1b201e; --ink:#e8ece9; --ink2:#b4bdb8; --muted:#87918c; --line:#2c3330; --grid:#242a27;
+    --blue:#43b4ea; --band:#2aa7e6; --real:#f2a43a;
+    --h1:#9fd6f5; --h2:#6cc0ee; --h3:#3fa6dd; --h4:#2a83b5; --h5:#1f6189;
+    --ok:#6cc768; --warn:#e3b04b; --bad:#ef7b6c; --okbg:#1f3320; --warnbg:#382e17; --badbg:#3b221e;
+    --pos:#ef7b6c; --neg:#6cc768; --nuc:#c39bd3;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "DM Sans","Segoe UI",system-ui,sans-serif}
+header{background:var(--surface);border-bottom:3px solid var(--brand);padding:14px 20px}
+header h1{margin:0;font:600 22px/1.2 "DM Serif Display",Georgia,serif}
+header .sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+.kpis{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:10px}
+.kpi{font-size:12px;color:var(--muted)} .kpi b{display:block;font-size:16px;color:var(--ink);font-weight:600}
+nav{display:flex;gap:4px;padding:0 20px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{border:0;background:none;padding:10px 14px;font:inherit;color:var(--ink2);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+nav button.on{color:var(--ink);border-bottom-color:var(--band);font-weight:600}
+main{max-width:1280px;margin:0 auto;padding:16px 20px 40px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.panel h2{margin:0 0 4px;font-size:15px} .panel .nota{color:var(--muted);font-size:12px;margin:0 0 10px}
+.dias{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.dia{border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--surface);transition:border-color .15s}
+.dia:hover{border-color:var(--muted)} .dia.sel{border-color:var(--band);box-shadow:0 0 0 2px color-mix(in srgb,var(--band) 25%,transparent)}
+.dia .f{font-weight:600} .dia .h{color:var(--muted);font-size:12px}
+.dia .p{font-size:24px;font-weight:600;margin:4px 0 0} .dia .p small{font-size:12px;color:var(--muted);font-weight:400}
+.dia .r{font-size:12px;color:var(--ink2)}
+.dia .mmm{display:grid;grid-template-columns:auto repeat(3,minmax(0,1fr));gap:1px 6px;margin:6px 0 4px;font-size:12px;font-variant-numeric:tabular-nums;align-items:baseline}
+.dia .mmm .c{color:var(--muted);font-size:11px;text-align:right} .dia .mmm .l{color:var(--muted);font-size:11px} .dia .mmm b,.dia .mmm i{text-align:right;font-style:normal}
+.dia .mmm b{font-weight:600}
+@media (max-width:520px){.dia .mmm{font-size:11px;gap:1px 3px} .dia .mmm .l,.dia .mmm .c{font-size:10px} .dia .mmm b{font-size:10px;letter-spacing:-.2px}}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:2px 8px;border-radius:20px;margin:6px 4px 0 0;font-weight:600}
+.chip.barato{background:var(--okbg);color:var(--ok)} .chip.medio{background:var(--warnbg);color:var(--warn)} .chip.caro{background:var(--badbg);color:var(--bad)}
+.chip.cero{background:var(--grid);color:var(--ink2)}
+.mini{display:flex;gap:2px;margin-top:8px;height:34px;align-items:flex-end}
+.mini div{flex:1;border-radius:2px 2px 0 0;background:var(--band);opacity:.75;min-height:2px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px}
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{fill:var(--muted);font-size:11px}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.12);display:none;z-index:5;min-width:150px}
+.tip b{display:block;margin-bottom:3px} .tip .row{display:flex;justify-content:space-between;gap:12px} .tip .sw{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.leyenda{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--ink2);margin:6px 0 0}
+.leyenda span::before{content:"";display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle;background:var(--c)}
+.leyenda span.area::before{height:10px;opacity:.35}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--line)} th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:600;font-size:11.5px}
+td.num{font-variant-numeric:tabular-nums}
+.fact{display:grid;grid-template-columns:110px 1fr 64px;align-items:center;gap:6px;font-size:12.5px;margin:5px 0}
+.fact .bar{position:relative;height:14px;background:var(--grid);border-radius:3px}
+.fact .bar i{position:absolute;top:0;bottom:0;border-radius:3px}
+.fact .bar .eje{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--muted)}
+.fact .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.fact .d{grid-column:1/-1;color:var(--muted);font-size:11px;margin:-3px 0 2px}
+.vacio{color:var(--muted);padding:24px;text-align:center;border:1px dashed var(--line);border-radius:10px}
+select{font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+.err{color:var(--bad)} .bien{color:var(--ok)}
+.pill{font-size:11px;color:var(--muted)}
+.leyenda .pill::before{display:none}
+.vista{display:none} .vista.on{display:block}
+@media (max-width:900px){.dias{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Previsor de precios OMIE · entorno a 5 días</h1>
+  <div class="sub" id="sub">Cargando datos…</div>
+  <div class="kpis" id="kpis"></div>
+</header>
+<nav id="nav">
+  <button data-v="semana" class="on">Semana prevista</button>
+  <button data-v="detalle">Detalle del día</button>
+  <button data-v="verif">Previsión vs. realidad</button>
+  <button data-v="modelo">Fiabilidad del modelo</button>
+</nav>
+<main>
+  <div id="sinDatos" class="vacio" style="display:none">
+    No se encuentra <b>datos/previsor_datos.js</b>. Ejecuta <b>actualizacion_diaria.bat</b> y vuelve a abrir esta página.
+  </div>
+
+  <section class="vista on" id="v-semana">
+    <div class="panel">
+      <h2>Precio medio diario previsto</h2>
+      <p class="nota">P50 = valor central; entre corchetes, la horquilla P10–P90 (el real debería caer dentro 8 de cada 10 veces). Barras: perfil de las 6 franjas. Pulsa un día para ver el detalle.</p>
+      <div class="dias" id="dias"></div>
+    </div>
+    <div class="panel">
+      <h2>Entorno horario: últimos días reales y 5 días previstos</h2>
+      <p class="nota">Línea naranja: precio real OMIE. Línea azul y banda: previsión P50 y horquilla P10–P90. Se muestran 7, 5 o 3 días reales según el ancho de la pantalla.</p>
+      <div class="chart" id="chSemana"></div>
+      <div class="leyenda"><span style="--c:var(--real)">Real (cuartos de 15 min)</span><span style="--c:var(--blue)">Previsión P50 (horaria)</span><span class="area" style="--c:var(--band)">Horquilla P10–P90</span></div>
+    </div>
+  </section>
+
+  <section class="vista" id="v-detalle">
+    <div class="panel">
+      <h2 id="detTitulo">Detalle</h2>
+      <p class="nota" id="detNota"></p>
+      <div class="grid2">
+        <div>
+          <div class="chart" id="chDia"></div>
+          <div class="leyenda"><span style="--c:var(--blue)">Previsión P50 (horaria)</span><span class="area" style="--c:var(--band)">P10–P90</span><span style="--c:var(--real)">Real en cuartos de 15 min (si ya se conoce)</span></div>
+        </div>
+        <div>
+          <table id="tabFranjas"></table>
+        </div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <h2>Por qué sale este precio</h2>
+        <p class="nota" id="factNota"></p>
+        <div id="factores"></div>
+      </div>
+      <div class="panel">
+        <h2>Días análogos usados</h2>
+        <p class="nota">Los días históricos más parecidos (demanda residual por franja, embalses, estación y tipo de día). Peso relativo en la previsión.</p>
+        <table id="tabAnalogos"></table>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Entradas previstas del día</h2>
+      <p class="nota">Demanda, eólica y FV peninsulares estimadas, y demanda residual térmica (demanda − eólica − FV − nuclear), en MW.</p>
+      <div class="chart" id="chEntradas"></div>
+      <div class="leyenda" id="legEntradas"></div>
+    </div>
+  </section>
+
+  <section class="vista" id="v-verif">
+    <div class="panel">
+      <h2>Comparación día a día</h2>
+      <p class="nota">Precio medio real de cada día frente a lo que se previó con 1 a 5 días de antelación (previsiones congeladas, nunca reescritas).</p>
+      <div id="tabVerifWrap"></div>
+    </div>
+    <div class="panel">
+      <h2>Perfil horario de un día: real frente a cada previsión</h2>
+      <p class="nota">Elige un día con precio real conocido. <select id="selVerif"></select></p>
+      <div class="chart" id="chVerif"></div>
+      <div class="leyenda" id="legVerif"></div>
+    </div>
+  </section>
+
+  <section class="vista" id="v-modelo">
+    <div class="panel">
+      <h2>Error por horizonte</h2>
+      <p class="nota">Error absoluto medio del precio medio diario (€/MWh). Referencia: repetir el último precio conocido al emitir, el de D+1 que OMIE ya ha publicado a las 16:30 (persistencia, últimos 90 días). Las previsiones de D+1 emitidas con el precio ya publicado no cuentan en las métricas ni en la calibración. Cobertura: % de veces que el real cayó dentro de P10–P90 (objetivo ≈ 80 %).</p>
+      <div id="tabModelo"></div>
+    </div>
+    <div class="panel">
+      <h2>Error por franja</h2>
+      <div id="tabFranjaErr"></div>
+    </div>
+    <div class="panel">
+      <h2>Calibración automática vigente</h2>
+      <p class="nota">Sesgo añadido (en proporción del coste del ciclo combinado) y factor de anchura de la horquilla, aprendidos de las previsiones verificadas. Se activan con al menos 10 días (sesgo) y 30 franjas (anchura) verificados.</p>
+      <div id="tabCal"></div>
+    </div>
+  </section>
+</main>
+
+<script src="datos/previsor_datos.js"></script>
+<script>
+"use strict";
+const D = window.PREVISOR_DATOS;
+const $ = s => document.querySelector(s);
+const DIAS_SEM = ["dom","lun","mar","mié","jue","vie","sáb"];
+const TIPOS = ["Laborable","Sábado","Domingo/festivo","Puente"];
+const fmt = (x,d=0) => x==null||isNaN(x) ? "–" : Number(x).toLocaleString("es-ES",{minimumFractionDigits:d,maximumFractionDigits:d});
+const fdia = f => { const d=new Date(f+"T12:00:00"); return DIAS_SEM[d.getDay()]+" "+d.getDate()+"/"+(d.getMonth()+1); };
+const media = a => { const v=a.filter(x=>x!=null); return v.length? v.reduce((s,x)=>s+x,0)/v.length : null; };
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const NIVEL = {barato:"▼ Barato", medio:"● Medio", caro:"▲ Caro"};
+let diaSel = 0;
+
+/* ------------------------------------------------------------------ gráfico genérico (SVG) */
+function grafico(cont, cfg){
+  // cfg: {n, etiquetas[], series:[{nombre,color,valores[],ancho,discontinua}], banda:{inf[],sup[],color}, unidad, marcas:[{i,texto}], ymin0}
+  const W = cont.clientWidth || 800, H = cfg.alto || 280, m = {l:48,r:12,t:12,b:(cfg.marcas||[]).some(mk=>mk.textos)?36:28};
+  const iw = W-m.l-m.r, ih = H-m.t-m.b, n = cfg.n;
+  let vals = [];
+  cfg.series.forEach(s=>s.valores.forEach(v=>v!=null&&vals.push(v)));
+  if(cfg.banda){ cfg.banda.inf.forEach(v=>v!=null&&vals.push(v)); cfg.banda.sup.forEach(v=>v!=null&&vals.push(v)); }
+  let lo = Math.min(cfg.ymin0?0:Infinity, ...vals), hi = Math.max(...vals);
+  if(!isFinite(lo)){lo=0;hi=1}
+  const paso = niceStep((hi-lo)/5); lo = Math.floor(lo/paso)*paso; hi = Math.ceil(hi/paso)*paso || paso;
+  const x = i => m.l + (n<=1?iw/2: i*iw/(n-1)), y = v => m.t + ih - (v-lo)/(hi-lo)*ih;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img">`;
+  for(let v=lo; v<=hi+1e-9; v+=paso){
+    s += `<line x1="${m.l}" x2="${W-m.r}" y1="${y(v)}" y2="${y(v)}" stroke="${css('--grid')}" stroke-width="1"/>`;
+    s += `<text x="${m.l-6}" y="${y(v)+4}" text-anchor="end">${fmt(v)}</text>`;
+  }
+  if(lo<0 && hi>0) s += `<line x1="${m.l}" x2="${W-m.r}" y1="${y(0)}" y2="${y(0)}" stroke="${css('--muted')}" stroke-width="1"/>`;
+  (cfg.marcas||[]).forEach((mk,k,lista)=>{
+    s += `<line x1="${x(mk.i)}" x2="${x(mk.i)}" y1="${m.t}" y2="${m.t+ih}" stroke="${css('--line')}" stroke-width="1" ${mk.fuerte?'':'stroke-dasharray="3 3"'}/>`;
+    if(mk.textos){
+      // etiqueta de día bajo el eje, centrada en su tramo: la variante más larga que quepa (≈6,3 px por carácter)
+      const fin = k+1<lista.length ? lista[k+1].i : n-1, xc = (x(mk.i)+x(fin))/2, hueco = x(fin)-x(mk.i)-4;
+      const t = mk.textos.find(v=>v.length*6.3<=hueco) || "";
+      if(t) s += `<text x="${xc}" y="${H-m.b+15}" text-anchor="middle">${t}</text>`;
+      if(mk.sub && mk.sub.length*5.8<=hueco) s += `<text x="${xc}" y="${H-m.b+29}" text-anchor="middle" style="fill:${css('--blue')};font-size:10px;font-weight:600">${mk.sub}</text>`;
+    } else if(mk.texto) s += `<text x="${x(mk.i)+4}" y="${m.t+11}">${mk.texto}</text>`;
+  });
+  const cada = Math.max(1, Math.ceil(n/(iw/46)));
+  cfg.etiquetas.forEach((e,i)=>{ if(e!=="" && i%cada===0) s += `<text x="${x(i)}" y="${H-8}" text-anchor="middle">${e}</text>`; });
+  if(cfg.banda){
+    const pts=[]; const b=cfg.banda;
+    let seg=[];
+    const cerrar=()=>{ if(seg.length>1){ const up=seg.map(i=>`${x(i)},${y(b.sup[i])}`).join(" "), dn=seg.slice().reverse().map(i=>`${x(i)},${y(b.inf[i])}`).join(" ");
+      s += `<polygon points="${up} ${dn}" fill="${b.color}" opacity=".22"/>`;} seg=[]; };
+    for(let i=0;i<n;i++){ if(b.inf[i]!=null&&b.sup[i]!=null) seg.push(i); else cerrar(); } cerrar();
+  }
+  cfg.series.forEach(se=>{
+    let d="", pen=false;
+    se.valores.forEach((v,i)=>{ if(v==null){pen=false;return;} d += (pen?"L":"M")+x(i).toFixed(1)+","+y(v).toFixed(1); pen=true; });
+    s += `<path d="${d}" fill="none" stroke="${se.color}" stroke-width="${se.ancho||2}" stroke-linejoin="round" stroke-linecap="round" ${se.discontinua?'stroke-dasharray="5 4"':''}/>`;
+  });
+  s += `<line class="cruz" x1="0" x2="0" y1="${m.t}" y2="${m.t+ih}" stroke="${css('--muted')}" stroke-width="1" style="display:none"/>`;
+  s += `<rect x="${m.l}" y="${m.t}" width="${iw}" height="${ih}" fill="transparent" class="hit"/></svg><div class="tip"></div>`;
+  cont.innerHTML = s;
+  const svg = cont.querySelector("svg"), tip = cont.querySelector(".tip"), cruz = cont.querySelector(".cruz");
+  svg.addEventListener("mousemove", ev=>{
+    const r = svg.getBoundingClientRect(), px = (ev.clientX-r.left)*W/r.width;
+    const i = Math.max(0, Math.min(n-1, Math.round((px-m.l)/(iw/(Math.max(n-1,1))))));
+    cruz.setAttribute("x1",x(i)); cruz.setAttribute("x2",x(i)); cruz.style.display="";
+    let h = `<b>${cfg.titulos? cfg.titulos[i] : cfg.etiquetas[i]}</b>`;
+    cfg.series.forEach(se=>{ const v=se.valores[i]; if(v!=null) h += `<div class="row"><span><span class="sw" style="background:${se.color}"></span>${se.nombre}</span><span>${fmt(v,1)} ${cfg.unidad||""}</span></div>`; });
+    if(cfg.banda && cfg.banda.inf[i]!=null) h += `<div class="row"><span>P10–P90</span><span>${fmt(cfg.banda.inf[i])}–${fmt(cfg.banda.sup[i])}</span></div>`;
+    tip.innerHTML = h; tip.style.display="block";
+    const tx = (x(i)/W)*r.width; tip.style.left = Math.min(r.width-tip.offsetWidth-4, Math.max(0, tx+12))+"px"; tip.style.top = "8px";
+  });
+  svg.addEventListener("mouseleave", ()=>{ tip.style.display="none"; cruz.style.display="none"; });
+}
+/* precios de 15 min: el real se dibuja con sus 96 cuartos (OMIE); la previsión es horaria y se repite en sus 4 cuartos */
+function a96(horas){ return horas.flatMap(v=>[v,v,v,v]); }
+function real96(c, horas){ return (c && c.length===96) ? c : (horas ? a96(horas) : null); }
+function hhmm(q){ const m=q*15; return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0"); }
+function extremos(v){ const x=v.filter(z=>z!=null), mx=Math.max(...x), mn=Math.min(...x);
+  return {max:mx, min:mn, med:x.reduce((a,b)=>a+b,0)/x.length, imax:v.indexOf(mx), imin:v.indexOf(mn)}; }
+function niceStep(r){ const p=Math.pow(10,Math.floor(Math.log10(Math.max(r,1e-9)))); const f=r/p; return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p; }
+
+/* ------------------------------------------------------------------ cabecera */
+function cabecera(){
+  const P = D.prevision;
+  $("#sub").textContent = P ? `Previsión emitida el ${fdia(P.emitida)} (${P.generada.replace("T"," ")}) · datos actualizados ${D.generado.replace("T"," ")}` : "Sin previsión emitida todavía";
+  if(!P) return;
+  const ult = D.historico.at(-1);
+  const k = [
+    ["Gas MIBGAS (día siguiente)", fmt(P.gas,2)+" €/MWh"],
+    ["Coste ciclo combinado", fmt(P.dias[0]?.entradas.coste_ccgt,0)+" €/MWh"],
+    ["Precio medio últimas 4 semanas", fmt(P.precio_ref_28d,1)+" €/MWh"],
+    ["Embalses", fmt(P.dias[0]?.entradas.llenado_pct,1)+" %"],
+    ["Potencia efectiva eólica / FV", fmt(P.cap_efectiva_mw[0]/1000,1)+" / "+fmt(P.cap_efectiva_mw[1]/1000,1)+" GW"],
+    ["Previsiones verificadas", fmt(D.verificadas)+" franjas"],
+  ];
+  $("#kpis").innerHTML = k.map(([a,b])=>`<div class="kpi">${a}<b>${b}</b></div>`).join("");
+}
+
+/* ------------------------------------------------------------------ semana */
+// Máximo, media aritmética y mínimo del día: el real con sus cuartos de 15 min (OMIE) y la previsión con su perfil P50
+function tablaMMM(d){
+  const ep = extremos(a96(d.horas.p50));
+  let h = `<div class="mmm" title="Prev.: máximo, media aritmética y mínimo del perfil P50 previsto (horario, repetido en sus 4 cuartos). Real: precios de 15 min de OMIE (Real h = solo hay precio horario)."><span></span><span class="c">máx</span><span class="c">media</span><span class="c">mín</span>
+    <span class="l">Prev.</span><i>${fmt(ep.max)}</i><i>${fmt(ep.med)}</i><i>${fmt(ep.min)}</i>`;
+  if(d.real_horas){
+    const q = d.real_cuartos && d.real_cuartos.length===96, er = extremos(real96(d.real_cuartos, d.real_horas));
+    h += `<span class="l">${q?"Real":"Real h"}</span><b>${fmt(er.max,2)}</b><b>${fmt(er.med,2)}</b><b>${fmt(er.min,2)}</b>`;
+  }
+  return h + "</div>";
+}
+function semana(){
+  const P = D.prevision; if(!P){ $("#dias").innerHTML='<div class="vacio">Aún no hay previsión.</div>'; return; }
+  const maxF = Math.max(...P.dias.flatMap(d=>Object.values(d.franjas).map(f=>f[1])), 1);
+  $("#dias").innerHTML = P.dias.map((d,i)=>{
+    const s=d.semaforo, real = d.real_horas ? media(d.real_horas) : null;
+    const barras = D.franjas.map(f=>`<div title="${f.nombre}: ${fmt(d.franjas[f.id][1])} €/MWh" style="height:${Math.max(4,d.franjas[f.id][1]/maxF*100)}%"></div>`).join("");
+    return `<div class="dia ${i===diaSel?'sel':''}" data-i="${i}">
+      <div class="f">${fdia(d.fecha)}</div><div class="h">D+${d.horizonte} · ${TIPOS[d.tipo_dia]}</div>
+      <div class="p">${fmt(d.dia[1])} <small>€/MWh</small></div>
+      <div class="r">[${fmt(d.dia[0])} – ${fmt(d.dia[2])}]${real!=null?` · <b>real ${fmt(real,1)}</b>`:""}</div>
+      ${tablaMMM(d)}
+      <span class="chip ${s.nivel}">${NIVEL[s.nivel]}</span>${s.riesgo_cero?'<span class="chip cero">◌ Riesgo precio 0</span>':''}
+      <div class="mini">${barras}</div></div>`;
+  }).join("");
+  document.querySelectorAll(".dia").forEach(el=>el.onclick=()=>{ diaSel=+el.dataset.i; semana(); detalle(); ir("detalle"); });
+
+  // entorno horario: 7 días reales + previsión
+  // en pantallas estrechas se muestran menos días reales para que la previsión no quede comprimida
+  const anchoG = $("#chSemana").clientWidth || 800, nReales = anchoG < 560 ? 3 : anchoG < 900 ? 5 : 7;
+  const reales = D.historico.filter(h=>h.fecha < P.dias[0].fecha).slice(-nReales);
+  const et=[], ti=[], real=[], p50=[], inf=[], sup=[], marcas=[];
+  const textosDia = f => { const d=new Date(f+"T12:00:00"); return [fdia(f), DIAS_SEM[d.getDay()]+" "+d.getDate(), String(d.getDate())]; };
+  reales.forEach(h=>{ marcas.push({i:et.length, textos:textosDia(h.fecha)}); real96(h.real_cuartos, h.real_horas).forEach((v,k)=>{ et.push(""); ti.push(fdia(h.fecha)+" "+hhmm(k)); real.push(v); p50.push(null); inf.push(null); sup.push(null); }); });
+  const corte = et.length;
+  P.dias.forEach(d=>{ marcas.push({i:et.length, textos:textosDia(d.fecha), sub:"D+"+d.horizonte}); const r = d.real_horas? real96(d.real_cuartos, d.real_horas) : null;
+    a96(d.horas.p50).forEach((v,k)=>{ et.push(""); ti.push(fdia(d.fecha)+" "+hhmm(k)); real.push(r? r[k]:null); p50.push(v); inf.push(d.horas.p10[k>>2]); sup.push(d.horas.p90[k>>2]); }); });
+  marcas.forEach(mk=>mk.fuerte = mk.i===corte);
+  grafico($("#chSemana"), {n:et.length, etiquetas:et, titulos:ti, unidad:"€/MWh", alto:300, marcas,
+    series:[{nombre:"Real (15 min)",color:css("--real"),valores:real},{nombre:"Previsión P50",color:css("--blue"),valores:p50}],
+    banda:{inf,sup,color:css("--band")}});
+}
+
+/* ------------------------------------------------------------------ detalle */
+const UNID = {"Viento":["GW",1,1],"Sol":["GW",1,1],"Demanda":["GW",1,1],"Nuclear":["GW",1,1],"Embalses":["%",10,0],"Gas y CO2":["€/MWh",1,0]};
+function detalle(){
+  const P = D.prevision; if(!P) return;
+  const d = P.dias[diaSel];
+  $("#detTitulo").textContent = `${fdia(d.fecha)} · D+${d.horizonte} · ${TIPOS[d.tipo_dia]}`;
+  const real = d.real_horas? media(d.real_horas):null;
+  $("#detNota").innerHTML = `Precio medio previsto <b>${fmt(d.dia[1],1)} €/MWh</b> (P10–P90: ${fmt(d.dia[0])}–${fmt(d.dia[2])})${real!=null?(()=>{ const e=extremos(real96(d.real_cuartos, d.real_horas)), q=d.real_cuartos&&d.real_cuartos.length===96;
+    return ` · real conocido: media <b>${fmt(e.med,2)} €/MWh</b>, máx. ${fmt(e.max,2)} (${hhmm(e.imax)}), mín. ${fmt(e.min,2)} (${hhmm(e.imin)})${q?" en cuartos de 15 min":" (horario: faltan los cuartos)"}`; })():""} · coste del ciclo combinado ${fmt(d.entradas.coste_ccgt)} €/MWh · temperatura media ponderada ${fmt(d.entradas.temp_media,1)} °C`;
+  const q = [...Array(96).keys()];
+  grafico($("#chDia"), {n:96, etiquetas:q.map(k=>k%4===0? String(k/4):""), titulos:q.map(k=>hhmm(k)+"–"+hhmm(k+1)), unidad:"€/MWh", alto:260,
+    series:[{nombre:"Previsión P50 (horaria)",color:css("--blue"),valores:a96(d.horas.p50)}].concat(d.real_horas?[{nombre:"Real (15 min)",color:css("--real"),valores:real96(d.real_cuartos, d.real_horas)}]:[]),
+    banda:{inf:a96(d.horas.p10),sup:a96(d.horas.p90),color:css("--band")}});
+  $("#tabFranjas").innerHTML = `<tr><th>Franja</th><th>P10</th><th>P50</th><th>P90</th>${d.real_horas?"<th>Real</th>":""}</tr>` +
+    D.franjas.map(f=>{ const v=d.franjas[f.id]; const r=d.real_horas? media(d.real_horas.slice(f.desde,f.hasta)):null;
+      return `<tr><td>${f.nombre}</td><td class="num">${fmt(v[0])}</td><td class="num"><b>${fmt(v[1])}</b></td><td class="num">${fmt(v[2])}</td>${r!=null?`<td class="num">${fmt(r)}</td>`:""}</tr>`; }).join("") +
+    `<tr><td><b>Día</b></td><td class="num">${fmt(d.dia[0])}</td><td class="num"><b>${fmt(d.dia[1])}</b></td><td class="num">${fmt(d.dia[2])}</td>${real!=null?`<td class="num"><b>${fmt(real)}</b></td>`:""}</tr>`;
+
+  // factores
+  const suma = d.factores.reduce((s,f)=>s+f.eur_mwh,0), otros = d.dia[1] - P.precio_ref_28d - suma;
+  $("#factNota").innerHTML = `Diferencia del precio medio previsto (${fmt(d.dia[1],1)}) frente a la media real de las últimas 4 semanas (${fmt(P.precio_ref_28d,1)} €/MWh), repartida por causas. Rojo encarece, verde abarata.`;
+  const lista = d.factores.concat([{factor:"Otros / no lineal", eur_mwh:otros}]);
+  const maxA = Math.max(10, ...lista.map(f=>Math.abs(f.eur_mwh)));
+  $("#factores").innerHTML = lista.map(f=>{
+    const w = Math.abs(f.eur_mwh)/maxA*50, pos = f.eur_mwh>=0;
+    let desc = "";
+    if(UNID[f.factor]){ const [u,k,dd]=UNID[f.factor]; desc = `previsto ${fmt(f.valor*k,dd)} ${u} · referencia ${fmt(f.referencia*k,dd)} ${u}`; }
+    else if(f.factor==="Tipo de día") desc = `${TIPOS[d.tipo_dia]} · ${fmt(f.referencia*100)} % de días festivos en la referencia`;
+    else desc = "parte que la regresión lineal no explica (interacciones, horas de precio 0…)";
+    return `<div class="fact"><span>${f.factor}</span><div class="bar"><i style="${pos?`left:50%;width:${w}%`:`left:${50-w}%;width:${w}%`};background:${pos?css('--pos'):css('--neg')}"></i><span class="eje"></span></div>
+      <span class="v">${pos?"+":""}${fmt(f.eur_mwh,1)}</span><span class="d">${desc}</span></div>`;
+  }).join("");
+
+  // análogos
+  const tot = d.analogos.reduce((s,a)=>s+a[1],0) || 1;
+  $("#tabAnalogos").innerHTML = "<tr><th>Fecha</th><th>Tipo</th><th>Precio medio real</th><th>Peso</th></tr>" + d.analogos.map(([f,w,pm])=>{
+    const hh = D.historico.find(x=>x.fecha===f); if(pm==null && hh) pm = hh.real_dia;
+    const dt = new Date(f+"T12:00:00");
+    return `<tr><td>${dt.toLocaleDateString("es-ES",{weekday:"short",day:"numeric",month:"short",year:"numeric"})}</td><td>${["L","M","X","J","V","S","D"][(dt.getDay()+6)%7]}</td><td class="num">${fmt(pm,1)}</td><td class="num">${fmt(w/tot*100)} %</td></tr>`;
+  }).join("");
+
+  // entradas
+  const h = [...Array(24).keys()];
+  const e = d.entradas, cols = [["Demanda",e.demanda_mw,css("--ink2")],["Eólica",e.eolica_mw,css("--brand")],["Solar FV",e.solar_mw,css("--real")],["Residual térmica",e.residual_mw,css("--blue")],["Nuclear",Array(24).fill(e.nuclear_mw),css("--nuc"),true]];
+  grafico($("#chEntradas"), {n:24, etiquetas:h.map(String), titulos:h.map(k=>k+":00"), unidad:"MW", alto:240, ymin0:true,
+    series: cols.map(([n,v,c,dis])=>({nombre:n,color:c,valores:v,discontinua:!!dis}))});
+  $("#legEntradas").innerHTML = cols.map(([n,,c])=>`<span style="--c:${c}">${n}</span>`).join("") + `<span class="pill nota-nuc">Nuclear constante en el día: ${fmt(e.nuclear_mw)} MW</span>`;
+}
+
+/* ------------------------------------------------------------------ verificación */
+function verif(){
+  const H = D.historico.filter(h=>Object.keys(h.previsiones).length);
+  if(!H.length){
+    $("#tabVerifWrap").innerHTML = '<div class="vacio">Todavía no hay días con previsión y precio real a la vez. El primero aparecerá mañana por la tarde, cuando se publique el precio del día previsto hoy como D+1; a los 5 días ya habrá comparaciones con todos los horizontes.</div>';
+    $("#selVerif").innerHTML = ""; $("#chVerif").innerHTML = ""; return;
+  }
+  const hz = ["1","2","3","4","5"];
+  $("#tabVerifWrap").innerHTML = `<table><tr><th>Día</th><th>Real</th>${hz.map(h=>`<th>D+${h}</th>`).join("")}</tr>` +
+    H.slice().reverse().map(h=>`<tr><td>${fdia(h.fecha)}</td><td class="num"><b>${fmt(h.real_dia,1)}</b></td>` + hz.map(k=>{
+      const p = h.previsiones[k]; if(!p) return "<td></td>";
+      const dentro = h.real_dia>=p.dia[0] && h.real_dia<=p.dia[2], err = p.dia[1]-h.real_dia;
+      return `<td class="num" title="P10–P90 ${fmt(p.dia[0])}–${fmt(p.dia[2])}">${fmt(p.dia[1])} <span class="${dentro?'bien':'err'}">${err>=0?"+":""}${fmt(err)}</span></td>`;
+    }).join("") + "</tr>").join("") + "</table><p class='nota'>Cada celda: P50 previsto y, en color, su error frente al real (verde si el real cayó dentro de la horquilla P10–P90).</p>";
+  const sel = $("#selVerif");
+  sel.innerHTML = H.slice().reverse().map(h=>`<option value="${h.fecha}">${fdia(h.fecha)}</option>`).join("");
+  sel.onchange = () => verifDia(sel.value);
+  verifDia(sel.value);
+}
+const COLH = {"1":"--h1","2":"--h2","3":"--h3","4":"--h4","5":"--h5"};
+function verifDia(f){
+  const h = D.historico.find(x=>x.fecha===f); if(!h) return;
+  const qs = [...Array(96).keys()];
+  const series = [];
+  Object.keys(h.previsiones).sort().reverse().forEach(k=>series.push({nombre:"Prev. D+"+k,color:css(COLH[k]),valores:a96(h.previsiones[k].p50_horas),ancho:1.6}));
+  series.push({nombre:"Real (15 min)",color:css("--real"),valores:real96(h.real_cuartos, h.real_horas),ancho:2.5});      // el real, encima
+  grafico($("#chVerif"), {n:96, etiquetas:qs.map(k=>k%4===0? String(k/4):""), titulos:qs.map(k=>hhmm(k)+"–"+hhmm(k+1)), unidad:"€/MWh", alto:260, series});
+  $("#legVerif").innerHTML = series.map(s=>`<span style="--c:${s.color}">${s.nombre}</span>`).join("") + '<span class="pill">Los azules más oscuros son las previsiones más próximas al día.</span>';
+}
+
+/* ------------------------------------------------------------------ modelo */
+function modelo(){
+  const M = D.metricas || {}, hz = ["1","2","3","4","5"];
+  if(!Object.keys(M).length){
+    $("#tabModelo").innerHTML = '<div class="vacio">Sin previsiones verificadas todavía. Error de referencia (persistencia, últimos 90 días): ' + hz.map(h=>`D+${h} ${fmt(D.persistencia_mae_90d[h],1)}`).join(" · ") + ' €/MWh.</div>';
+    $("#tabFranjaErr").innerHTML = "";
+  } else {
+    $("#tabModelo").innerHTML = `<table><tr><th>Horizonte</th><th>Días</th><th>Error medio modelo</th><th>Error persistencia</th><th>Mejora</th><th>Sesgo</th><th>Cobertura P10–P90</th></tr>` +
+      hz.map(h=>{ const m=(M[h]||{}).dia; if(!m) return `<tr><td>D+${h}</td><td colspan="6" class="pill">sin datos</td></tr>`;
+        const p=D.persistencia_mae_90d[h], mej = p? (1-m.mae/p)*100 : null;
+        return `<tr><td>D+${h}</td><td class="num">${m.n}</td><td class="num"><b>${fmt(m.mae,1)}</b></td><td class="num">${fmt(p,1)}</td><td class="num ${mej>0?'bien':'err'}">${mej==null?"–":(mej>0?"−":"+")+fmt(Math.abs(mej))+" %"}</td><td class="num">${m.sesgo>=0?"+":""}${fmt(m.sesgo,1)}</td><td class="num">${fmt(m.cobertura*100)} %</td></tr>`; }).join("") + "</table>";
+    $("#tabFranjaErr").innerHTML = `<table><tr><th>Franja</th>${hz.map(h=>`<th>D+${h}</th>`).join("")}</tr>` + D.franjas.map(f=>`<tr><td>${f.nombre}</td>` +
+      hz.map(h=>{ const m=(M[h]||{})[f.id]; return `<td class="num">${m?fmt(m.mae,1)+` <span class="pill">${fmt(m.cobertura*100)}%</span>`:"–"}</td>`; }).join("") + "</tr>").join("") +
+      "</table><p class='nota'>Error absoluto medio en €/MWh y, en gris, la cobertura de la horquilla.</p>";
+  }
+  const C = D.calibracion || {};
+  $("#tabCal").innerHTML = `<table><tr><th>Horizonte</th><th>Verificadas</th><th>Anchura día</th>${D.franjas.map(f=>`<th>${f.nombre.split(" ")[0]}</th>`).join("")}</tr>` +
+    hz.map(h=>{ const c=C[h]||{sesgo:{},ensanche:1,n:0}; const ef=c.ensanche_franja||{};
+      return `<tr><td>D+${h}</td><td class="num">${c.n}</td><td class="num">×${fmt(ef.dia!=null?ef.dia:1,2)}</td>` +
+      D.franjas.map(f=>`<td class="num">${c.sesgo[f.id]!=null?(c.sesgo[f.id]>=0?"+":"")+fmt(c.sesgo[f.id],3):"–"} <span class="pill">×${fmt(ef[f.id]!=null?ef[f.id]:c.ensanche,2)}</span></td>`).join("") + "</tr>"; }).join("") +
+    "</table><p class='nota'>En cada franja: sesgo y, en gris, su factor de anchura propio.</p>";
+}
+
+/* ------------------------------------------------------------------ navegación */
+function ir(v){
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on", b.dataset.v===v));
+  document.querySelectorAll(".vista").forEach(s=>s.classList.toggle("on", s.id==="v-"+v));
+  try{ localStorage.setItem("previsor_vista", v); }catch(e){}
+  pintar(v);
+}
+function pintar(v){ if(v==="semana") semana(); else if(v==="detalle") detalle(); else if(v==="verif") verif(); else modelo(); }
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>ir(b.dataset.v));
+let tRes; window.addEventListener("resize", ()=>{ clearTimeout(tRes); tRes=setTimeout(()=>pintar(document.querySelector("nav button.on").dataset.v),150); });
+
+if(!D){ $("#sinDatos").style.display="block"; $("#sub").textContent="Sin datos"; document.querySelectorAll(".vista").forEach(s=>s.style.display="none"); }
+else { cabecera(); let v="semana"; try{ v=localStorage.getItem("previsor_vista")||"semana"; }catch(e){} ir(v); }
+</script>
+</body>
+</html>
