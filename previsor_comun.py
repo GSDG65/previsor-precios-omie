@@ -8,7 +8,7 @@ configuración, descargas HTTP con reintentos, lectores de cada fuente
 
 Solo usa la librería estándar de Python.
 """
-import csv, gzip, io, json, math, os, re, ssl, sys, time, zipfile
+import bisect, csv, gzip, io, json, math, os, re, ssl, sys, time, zipfile
 import datetime as dt
 import urllib.request, urllib.error, urllib.parse
 
@@ -70,8 +70,8 @@ CONFIG_DEFECTO = {
     # CO2 (EUA, €/t) medio aproximado por año, para normalizar el coste del ciclo combinado.
     # Valores orientativos: corrígelos si tienes mejores datos. El año en curso se usa también como valor actual.
     "co2_anual_eur_t": {"2021": 53, "2022": 81, "2023": 84, "2024": 65, "2025": 73, "2026": 79.38},
-    # CO2 (EUA, €/t) medio mensual (Sendeco2). Tiene prioridad sobre el anual. Para los meses posteriores al
-    # último que figure se usa ese último valor. Añade cada mes su media para que el coste no se quede atrás.
+    # CO2 (EUA, €/t) medio mensual (Sendeco2). Solo se usa si falta el CO2 diario que se descarga de Sendeco2
+    # (datos/co2_eua_diario.csv); entonces tiene prioridad sobre el anual.
     "co2_mensual_eur_t": {"2026-01": 86.08, "2026-02": 73.79, "2026-03": 68.73, "2026-04": 72.68,
                           "2026-05": 74.95, "2026-06": 77.93, "2026-07": 80.42, "2026-08": 81.59,
                           "2026-09": 85.04, "2026-10": 86.17, "2026-11": 86.38},
@@ -87,9 +87,38 @@ CONFIG_DEFECTO = {
 }
 
 
+_CO2_DIARIO = None
+
+def co2_diario():
+    """(fechas ordenadas, {fecha: €/t}) del CO2 diario de Sendeco2 (datos/co2_eua_diario.csv); se lee una vez."""
+    global _CO2_DIARIO
+    if _CO2_DIARIO is None:
+        _, t = leer_tabla("co2_eua_diario.csv")
+        d = {}
+        for k, r in t.items():
+            try:
+                v = float(r["eua_eur_t"])
+            except (TypeError, ValueError, KeyError):
+                continue
+            if v > 0:
+                d[k] = v
+        _CO2_DIARIO = (sorted(d), d)
+    return _CO2_DIARIO
+
+def reiniciar_co2():
+    global _CO2_DIARIO
+    _CO2_DIARIO = None
+
 def co2_eur_t(cfg, fecha):
-    """Precio del CO2 (€/t) para una fecha AAAA-MM-DD: media mensual si se conoce; si la fecha es posterior al
-    último mes conocido, ese último mes; si no, la media anual (o la del último año disponible)."""
+    """Precio del CO2 (€/t) para una fecha AAAA-MM-DD.
+    1) CO2 diario de Sendeco2: el del día o, si no hubo sesión (fines de semana, festivos, días futuros), el último
+       anterior. 2) Antes de la primera fecha diaria: media mensual de config; para meses posteriores al último
+       que figure, ese último. 3) Si no, la media anual (o la del último año disponible)."""
+    fechas, d = co2_diario()
+    if fechas and fecha >= fechas[0]:
+        if fecha in d:
+            return d[fecha]
+        return d[fechas[bisect.bisect_right(fechas, fecha) - 1]]
     men = cfg.get("co2_mensual_eur_t") or {}
     mes = fecha[:7]
     if mes in men:

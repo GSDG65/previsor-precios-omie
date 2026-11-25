@@ -5,7 +5,7 @@ con horquilla P10–P90. Se ejecuta cada día en GitHub Actions y publica el vis
 
 - **Modelo**: días análogos sobre la demanda residual térmica (demanda − eólica − FV − nuclear),
   con el precio expresado como proporción del coste del ciclo combinado (gas + CO2).
-- **Datos**: OMIE (precios, también cuartohorarios), REE (demanda, generación, embalses), MIBGAS (gas),
+- **Datos**: OMIE (precios, también cuartohorarios), REE (demanda, generación, embalses), MIBGAS (gas), Sendeco2 (CO2 diario),
   Open-Meteo (varios modelos meteorológicos y reanálisis), ENTSO-E (Francia, Portugal, paradas nucleares).
 - **Calibración**: el sesgo y la anchura de la horquilla se recalibran solos con las previsiones congeladas.
   El sesgo de cada franja se calcula aparte para días de poco y mucho viento previsto (corte en la mediana);

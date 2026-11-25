@@ -528,7 +528,8 @@ def main():
 
     futuro, analisis = {}, {}
     if "--sin-descarga" not in args:
-        for paso in (ch.cargar_omie, lambda: ch.cargar_ree(rapido=True), lambda: ch.cargar_gas(rapido=True), ch.cargar_entsoe):
+        for paso in (ch.cargar_omie, lambda: ch.cargar_ree(rapido=True), lambda: ch.cargar_gas(rapido=True),
+                     lambda: ch.cargar_co2(rapido=True), ch.cargar_entsoe):
             try:
                 paso()
             except Exception as e:

@@ -297,6 +297,49 @@ def cargar_gas(rapido=False):
     log(f"   OK · {len(filas)} días · último {max(serie)} = {serie[max(serie)]} €/MWh")
 
 # ============================================================================
+# 3b. Sendeco2 · CO2 (EUA) diario
+# ============================================================================
+SENDECO2_URL = "https://www.sendeco2.com/site_sendeco/service/download-csv.php?year={anio}"
+CO2_DESDE = 2021
+
+def parsear_sendeco2(texto):
+    """CSV de Sendeco2 (Fecha DD-MM-AAAA;EUA;CER;SPREAD) → {AAAA-MM-DD: EUA €/t}."""
+    out = {}
+    for linea in texto.splitlines()[1:]:
+        c = linea.strip().split(";")
+        if len(c) < 2:
+            continue
+        try:
+            d, m, a = c[0].strip().split("-")
+            v = float(c[1].strip().strip('"').replace(",", "."))
+        except ValueError:
+            continue
+        if v > 0:
+            out[f"{a}-{m}-{d}"] = v
+    return out
+
+def cargar_co2(rapido=False):
+    log("== Sendeco2 · CO2 (EUA) diario ==")
+    _, previo = leer_tabla("co2_eua_diario.csv")
+    serie = {k: float(r["eua_eur_t"]) for k, r in previo.items() if r.get("eua_eur_t")}
+    desde = HOY.year - 1 if (rapido and serie) else CO2_DESDE
+    for anio in range(desde, HOY.year + 1):
+        try:
+            s = parsear_sendeco2(descargar(SENDECO2_URL.format(anio=anio), intentos=3, timeout=60).decode("utf-8", "replace"))
+            serie.update(s)
+            log(f"   {anio}: {len(s)} sesiones")
+        except Exception as e:
+            log(f"   ! {anio}: {e}")
+        time.sleep(0.5)
+    if not serie:
+        log("   ! sin datos de CO2: se usa la media mensual/anual de config")
+        return
+    escribir_tabla("co2_eua_diario.csv", ["fecha", "eua_eur_t"], {k: {"fecha": k, "eua_eur_t": v} for k, v in serie.items()})
+    reiniciar_co2()
+    u = max(serie)
+    log(f"   OK · {len(serie)} sesiones · último {u} = {serie[u]} €/t")
+
+# ============================================================================
 # 4. Open-Meteo
 # ============================================================================
 FUTURO_MODELOS = {}      # {modelo: {punto: {fecha: {var: [24]}}}} previsión de varios modelos (hoy en adelante)
@@ -500,6 +543,7 @@ if __name__ == "__main__":
     if "omie" in partes: cargar_omie()
     if "ree" in partes: cargar_ree()
     if "gas" in partes: cargar_gas()
+    if "co2" in partes or "gas" in partes: cargar_co2()
     if "entsoe" in partes: cargar_entsoe()
     if "meteo" in partes: cargar_meteo(cfg)
     if "consolidar" in partes: consolidar(cfg)
