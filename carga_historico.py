@@ -175,8 +175,9 @@ def cargar_ree(rapido=False):
 def cargar_entsoe(rapido=False):
     """Series de ENTSO-E en hora local (CSV ancho fecha;h00..h23). Desde 2024; después solo lo reciente.
     Francia: precio day-ahead, demanda real, saldo físico España→Francia (MW, + = España exporta).
-    Portugal (mismo mercado MIBEL): demanda real, eólica y solar reales, saldo físico España→Portugal."""
-    log("== ENTSO-E · Francia y Portugal ==")
+    Portugal (mismo mercado MIBEL): demanda real, eólica y solar reales, saldo físico España→Portugal.
+    Interconexiones: capacidad de intercambio prevista (NTC) con Francia y Portugal en cada sentido."""
+    log("== ENTSO-E · Francia, Portugal e interconexiones ==")
     tok = entsoe_token()
     if not tok:
         log("   sin clave (entsoe_token.txt): se omite")
@@ -199,6 +200,8 @@ def cargar_entsoe(rapido=False):
         time.sleep(1)
         return r
     flujo = lambda a, b, de, a_: consulta(a, b, "quantity", documentType="A11", out_Domain=de, in_Domain=a_)
+    capacidad = lambda a, b, de, a_, contrato: consulta(a, b, "quantity", **{
+        "documentType": "A61", "contract_MarketAgreement.Type": contrato, "out_Domain": de, "in_Domain": a_})
     SERIES = [
         # fichero, etiqueta, último día, función (a, b) -> {hora UTC: valor}, decimales
         ("francia_precio_horario.csv", "precio Francia", 1,
@@ -217,6 +220,14 @@ def cargar_entsoe(rapido=False):
          lambda a, b: consulta(a, b, "quantity", True, documentType="A75", processType="A16", in_Domain=ZONA_PT, psrType="B16"), 0),
         ("intercambio_es_pt_horario.csv", "intercambio ES→PT", 0,
          lambda a, b: (lambda x, y: {h: x[h] - y.get(h, 0.0) for h in x})(flujo(a, b, ZONA_ES, ZONA_PT), flujo(a, b, ZONA_PT, ZONA_ES)), 0),
+        # Capacidad de intercambio prevista (NTC, MW) en cada sentido: la del día siguiente y la semanal, que ya
+        # recoge las paradas programadas de líneas. Solo se GUARDAN: el modelo aún no las usa (pendiente de evaluar).
+        ("ntc_es_fr_d1.csv", "capacidad ES→FR día siguiente", 1, lambda a, b: capacidad(a, b, ZONA_ES, ZONA_FR, "A01"), 0),
+        ("ntc_fr_es_d1.csv", "capacidad FR→ES día siguiente", 1, lambda a, b: capacidad(a, b, ZONA_FR, ZONA_ES, "A01"), 0),
+        ("ntc_es_fr_semanal.csv", "capacidad ES→FR semanal", 7, lambda a, b: capacidad(a, b, ZONA_ES, ZONA_FR, "A02"), 0),
+        ("ntc_fr_es_semanal.csv", "capacidad FR→ES semanal", 7, lambda a, b: capacidad(a, b, ZONA_FR, ZONA_ES, "A02"), 0),
+        ("ntc_es_pt_d1.csv", "capacidad ES→PT día siguiente", 1, lambda a, b: capacidad(a, b, ZONA_ES, ZONA_PT, "A01"), 0),
+        ("ntc_pt_es_d1.csv", "capacidad PT→ES día siguiente", 1, lambda a, b: capacidad(a, b, ZONA_PT, ZONA_ES, "A01"), 0),
     ]
     for fichero, etiqueta, dias_mas, fn, dec in SERIES:
         try:
